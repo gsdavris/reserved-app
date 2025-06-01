@@ -1,6 +1,6 @@
 export default function ExperienceCard({ experience }) {
 	return (
-		<div className='bg-white rounded-lg shadow border hover:shadow-lg transition-transform duration-200 hover:scale-105 overflow-hidden'>
+		<div className='bg-white rounded-lg shadow hover:shadow-lg transition-transform duration-200 hover:scale-105 overflow-hidden'>
 			{experience.image ? (
 				<img
 					src={experience.image}

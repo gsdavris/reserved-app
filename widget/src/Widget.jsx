@@ -34,7 +34,7 @@ export default function Widget({ businessId }) {
 	}, [open, businessId]);
 
 	return (
-		<div className='fixed bottom-4 right-4 z-50'>
+		<div className='reserved-widget fixed bottom-4 right-4 z-50'>
 			{/* Overlay modal */}
 			<div
 				className={`fixed inset-0 bg-black/30 flex items-center justify-center p-4 transition-opacity duration-300 ${

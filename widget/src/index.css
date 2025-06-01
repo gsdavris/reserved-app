@@ -1,6 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+.reserved-widget {
+	all: initial;
+	display: block;
+	position: fixed;
+	bottom: 1rem;
+	right: 1rem;
+	z-index: 10000;
+	font-family: system-ui, sans-serif;
+}
 
 @keyframes pulseGlow {
 	0%,
