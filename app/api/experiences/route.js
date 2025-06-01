@@ -1,4 +1,5 @@
 import { getExperiences, createExperience } from '@/lib/handlers/experienceHandlers';
+import { getAccessibleBusinessId } from '@/lib/utils/getAccessibleBusinessId';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { NextResponse } from 'next/server';
@@ -10,27 +11,22 @@ const corsHeaders = {
 };
 
 export async function GET (req) {
-    const { searchParams } = new URL(req.url);
-    const businessId = searchParams.get('businessId');
-
     try {
+        const businessId = await getAccessibleBusinessId(req);
         const experiences = await getExperiences(businessId);
+
         return new NextResponse(JSON.stringify(experiences), {
             status: 200,
-            headers: {
-                ...corsHeaders,
-                'Content-Type': 'application/json',
-            },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     } catch (error) {
         console.error(error);
-        return new NextResponse(JSON.stringify({ error: 'Failed to fetch experiences' }), {
-            status: 500,
-            headers: {
-                ...corsHeaders,
-                'Content-Type': 'application/json',
-            },
-        });
+
+        const status = error.message === 'Missing businessId' ? 400 : 500;
+        return new NextResponse(
+            JSON.stringify({ error: error.message }),
+            { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
     }
 }
 

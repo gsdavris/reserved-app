@@ -21,16 +21,15 @@ export default function RootLayout ({ children }) {
     <html lang="en">
       <head>
         <link rel="stylesheet" href="/widget.css" />
+        <script
+          src="widget.iife.js"
+          defer
+        ></script>
       </head>
       <body
         className={ `${geistSans.variable} ${geistMono.variable} antialiased` }
       >
         { children }
-        <script
-          src="widget.iife.js"
-          data-business-id="1"
-          defer
-        ></script>
       </body>
     </html>
   );
