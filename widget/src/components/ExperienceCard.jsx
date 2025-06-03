@@ -1,3 +1,5 @@
+import { MapPin } from 'lucide-react';
+
 export default function ExperienceCard({ experience }) {
 	return (
 		<div className='bg-white rounded-lg shadow hover:shadow-lg transition-transform duration-200 hover:scale-105 overflow-hidden'>
@@ -17,8 +19,9 @@ export default function ExperienceCard({ experience }) {
 				<p className='text-sm text-gray-600 line-clamp-2'>
 					{experience.description}
 				</p>
-				<div className='mt-2 text-xs text-gray-400'>
-					📍 {experience.location}
+				<div className='mt-2 text-xs text-gray-400 flex items-center gap-1'>
+					<MapPin className='w-3 h-3 text-blue-600' />
+					<span>{experience.location}</span>
 				</div>
 			</div>
 		</div>
