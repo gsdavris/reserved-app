@@ -1,11 +1,11 @@
 export default function ExperienceCard({ experience }) {
 	return (
 		<div className='bg-white rounded-lg shadow hover:shadow-lg transition-transform duration-200 hover:scale-105 overflow-hidden'>
-			{experience.image ? (
+			{experience.featuredImage ? (
 				<img
-					src={experience.image}
-					alt={experience.title}
-					className='w-full h-40 object-cover'
+					src={experience.featuredImage.url}
+					alt={experience.featuredImage.alt || experience.title}
+					className='w-full h-40 object-cover rounded-md'
 				/>
 			) : (
 				<div className='bg-gray-200 w-full h-40 flex items-center justify-center text-gray-400 text-sm font-medium'>

@@ -14,36 +14,51 @@ enum Role {
 }
 
 model User {
-  id          Int         @id @default(autoincrement())
-  email       String      @unique
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
   name        String?
-  role        Role        @default(customer)
-  createdAt   DateTime    @default(now())
+  role        Role         @default(customer)
+  createdAt   DateTime     @default(now())
   bookings    Booking[]
   experiences Experience[] @relation("BusinessExperiences")
 }
 
 model Experience {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String
-  location    String
-  category    String
-  price       Float
-  available   Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  businessId  Int
-  business    User      @relation("BusinessExperiences", fields: [businessId], references: [id])
-  bookings    Booking[]
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String
+  location        String
+  category        String
+  price           Float
+  available       Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  businessId      Int
+  business        User      @relation("BusinessExperiences", fields: [businessId], references: [id])
+  bookings        Booking[]
+  featuredImageId Int?      @unique
+  featuredImage   Image?    @relation("FeaturedImage", fields: [featuredImageId], references: [id])
+  images          Image[]   @relation("GalleryImages")
 }
 
 model Booking {
-  id           Int         @id @default(autoincrement())
-  user         User        @relation(fields: [userId], references: [id])
+  id           Int        @id @default(autoincrement())
+  user         User       @relation(fields: [userId], references: [id])
   userId       Int
-  experience   Experience  @relation(fields: [experienceId], references: [id])
+  experience   Experience @relation(fields: [experienceId], references: [id])
   experienceId Int
   date         DateTime
-  status       String      @default("pending")
-  createdAt    DateTime    @default(now())
+  status       String     @default("pending")
+  createdAt    DateTime   @default(now())
+}
+
+model Image {
+  id           Int         @id @default(autoincrement())
+  url          String
+  alt          String?
+  caption      String?
+  width        Int?
+  height       Int?
+  featuredOn   Experience? @relation("FeaturedImage")
+  experienceId Int?
+  experience   Experience? @relation("GalleryImages", fields: [experienceId], references: [id])
 }
