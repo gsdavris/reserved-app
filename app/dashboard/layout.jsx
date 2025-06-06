@@ -2,20 +2,25 @@
 import { useState } from 'react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Topbar from '@/components/dashboard/Topbar';
+import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 
-export default function DashboardLayout({ children }) {
-	const [sidebarOpen, setSidebarOpen] = useState(true);
+export default function Layout({ children }) {
+	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
 	return (
-		<div className='flex h-screen bg-gray-100'>
-			<Sidebar open={sidebarOpen} />
-			<div
-				className={`flex flex-col flex-1 transition-all ${
-					sidebarOpen ? 'ml-64' : 'ml-0'
-				}`}>
-				<Topbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-				<main className='flex-1 p-4 overflow-auto'>{children}</main>
+		<SessionProviderWrapper>
+			<div className='flex h-screen overflow-hidden'>
+				<Sidebar
+					isOpen={isSidebarOpen}
+					toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+				/>
+				<div className='flex flex-col flex-1 transition-all duration-300'>
+					<Topbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+					<main className='flex-1 overflow-y-auto p-4 bg-gray-50'>
+						{children}
+					</main>
+				</div>
 			</div>
-		</div>
+		</SessionProviderWrapper>
 	);
 }
