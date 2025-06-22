@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Notification from '@/components/ui/Notification';
 
 export default function SignupPage() {
 	const router = useRouter();
@@ -13,6 +15,8 @@ export default function SignupPage() {
 		accepted: false,
 	});
 	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
+	const [loading, setLoading] = useState(false);
 
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;
@@ -24,6 +28,8 @@ export default function SignupPage() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setError('');
+		setSuccess('');
 
 		if (form.password !== form.repeatPassword) {
 			setError('Passwords do not match');
@@ -35,28 +41,48 @@ export default function SignupPage() {
 			return;
 		}
 
-		const res = await fetch('/api/auth/signup', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				email: form.email,
-				password: form.password,
-				name: form.name,
-			}),
-		});
+		setLoading(true);
+		try {
+			const res = await fetch('/api/auth/signup', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					email: form.email,
+					password: form.password,
+					name: form.name,
+				}),
+			});
 
-		if (!res.ok) {
-			setError('Signup failed');
-			return;
+			if (!res.ok) {
+				const data = await res.json();
+				setError(data.error || 'Signup failed');
+			} else {
+				setSuccess('Signup successful! Redirecting...');
+				setTimeout(() => router.push('/login'), 1500);
+			}
+		} catch (err) {
+			setError('Something went wrong. Please try again.');
 		}
-
-		router.push('/login');
+		setLoading(false);
 	};
 
 	return (
-		<div className='max-w-md mx-auto mt-20 p-6 bg-white shadow rounded'>
+		<div className='max-w-md mx-auto mt-48 p-6 bg-white shadow rounded'>
 			<h1 className='text-xl font-bold mb-4'>Sign Up</h1>
-			{error && <p className='text-red-500 text-sm mb-2'>{error}</p>}
+
+			{error && (
+				<Notification
+					type='error'
+					message={error}
+				/>
+			)}
+			{success && (
+				<Notification
+					type='success'
+					message={success}
+				/>
+			)}
+
 			<form
 				onSubmit={handleSubmit}
 				className='space-y-4'>
@@ -103,21 +129,29 @@ export default function SignupPage() {
 						name='accepted'
 						checked={form.accepted}
 						onChange={handleChange}
-						className='accent-primary'
+						className='accent-blue-600'
 						required
 					/>
 					I accept the{' '}
 					<a
 						href='/privacy'
-						className='text-primary underline'>
+						className='text-blue-600 underline'>
 						Privacy Policy
 					</a>
 				</label>
 
 				<button
 					type='submit'
-					className='w-full bg-primary text-white py-2 rounded'>
-					Sign Up
+					className='cursor-pointer w-full bg-blue-600 text-white py-2 rounded flex justify-center items-center'
+					disabled={loading}>
+					{loading ? (
+						<LoadingSpinner
+							size='sm'
+							color='white'
+						/>
+					) : (
+						'Sign Up'
+					)}
 				</button>
 			</form>
 
@@ -125,7 +159,7 @@ export default function SignupPage() {
 				Already have an account?{' '}
 				<a
 					href='/login'
-					className='text-primary hover:underline'>
+					className='text-blue-600 hover:underline'>
 					Login
 				</a>
 			</p>
