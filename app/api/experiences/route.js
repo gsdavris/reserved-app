@@ -13,7 +13,8 @@ const corsHeaders = {
 export async function GET (req) {
     try {
         const businessId = await getAccessibleBusinessId(req);
-        const experiences = await getExperiences(businessId);
+        const experiences = await getExperiences(businessId) || [];
+
 
         return new NextResponse(JSON.stringify(experiences), {
             status: 200,

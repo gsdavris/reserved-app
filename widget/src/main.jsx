@@ -4,14 +4,19 @@ import Widget from './Widget';
 import './index.css';
 
 function initWidget() {
-	const scriptTag = document.querySelector('script[data-business-id]');
-	const businessId = scriptTag?.dataset?.businessId || 'defaultId';
+	const scriptTag = document.currentScript;
+	const businessId = scriptTag?.dataset?.businessId || 'demo';
 
-	const div = document.createElement('div');
-	document.body.appendChild(div);
+	const mount = document.createElement('div');
+	mount.className = 'reserved-widget';
+	document.body.appendChild(mount);
 
-	const root = createRoot(div);
+	const root = createRoot(mount);
 	root.render(<Widget businessId={businessId} />);
 }
 
-initWidget();
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initWidget);
+} else {
+	initWidget();
+}

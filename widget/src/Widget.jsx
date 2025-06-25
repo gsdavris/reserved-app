@@ -35,7 +35,7 @@ export default function Widget({ businessId }) {
 	}, [open, businessId]);
 
 	return (
-		<div className='reserved-widget fixed bottom-4 right-4 z-50'>
+		<>
 			<OverlayModal
 				open={open}
 				setOpen={setOpen}
@@ -43,6 +43,6 @@ export default function Widget({ businessId }) {
 				experiences={experiences}
 			/>
 			{!open && <FloatingButton setOpen={setOpen} />}
-		</div>
+		</>
 	);
 }

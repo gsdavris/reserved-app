@@ -6,7 +6,7 @@ export default function ExperienceCardsList({ experiences, loading }) {
 		<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 			{loading
 				? Array.from({ length: 4 }).map((_, idx) => <SkeletonCard key={idx} />)
-				: experiences.map((exp) => (
+				: experiences?.map((exp) => (
 						<ExperienceCard
 							key={exp.id}
 							experience={exp}

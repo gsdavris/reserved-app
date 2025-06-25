@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 .reserved-widget {
-	all: initial;
+	all: unset;
 	display: block;
 	position: fixed;
 	bottom: 1rem;
