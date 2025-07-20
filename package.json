@@ -1,30 +1,35 @@
 {
-  "name": "reserved-app",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.8.2",
-    "bcrypt": "^6.0.0",
-    "lucide-react": "^0.511.0",
-    "next": "15.3.2",
-    "next-auth": "^4.24.11",
-    "openai": "^4.103.0",
-    "prisma": "^6.8.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "zod": "^3.25.28"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.2",
-    "tailwindcss": "^4"
-  }
+	"name": "reserved-app",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.837.0",
+		"@headlessui/react": "^2.2.4",
+		"@prisma/client": "^6.8.2",
+		"bcrypt": "^6.0.0",
+		"date-fns": "^4.1.0",
+		"dayjs": "^1.11.13",
+		"lucide-react": "^0.511.0",
+		"next": "15.3.2",
+		"next-auth": "^4.24.11",
+		"openai": "^4.103.0",
+		"prisma": "^6.8.2",
+		"probe-image-size": "^7.2.3",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"zod": "^3.25.28"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3",
+		"@tailwindcss/postcss": "^4",
+		"eslint": "^9",
+		"eslint-config-next": "15.3.2",
+		"tailwindcss": "^4"
+	}
 }

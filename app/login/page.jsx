@@ -4,14 +4,13 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import Notification from '@/components/ui/Notification';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function LoginPage() {
 	const router = useRouter();
 	const [form, setForm] = useState({ email: '', password: '' });
-	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
-	const [toast, setToast] = useState(null);
+	const { showNotification } = useNotification();
 
 	const handleChange = (e) => {
 		setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,22 +19,27 @@ export default function LoginPage() {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		setError('');
+
 		const res = await signIn('credentials', {
 			redirect: false,
 			email: form.email,
 			password: form.password,
 		});
+
 		setLoading(false);
-		if (res.error)
-			return setToast({ message: 'Invalid credentials', type: 'error' });
-		setToast({ message: 'Login successful', type: 'success' });
+
+		if (res.error) {
+			showNotification('Λάθος στοιχεία σύνδεσης.', 'error');
+			return;
+		}
+
+		showNotification('Σύνδεση επιτυχής!', 'success');
 		router.push('/dashboard');
 	};
 
 	return (
 		<div className='max-w-md mx-auto mt-48 p-6 bg-white shadow rounded'>
-			<h1 className='text-xl font-bold mb-4'>Login</h1>
+			<h1 className='text-xl font-bold mb-4'>Σύνδεση</h1>
 			<form
 				onSubmit={handleSubmit}
 				className='space-y-4'>
@@ -51,7 +55,7 @@ export default function LoginPage() {
 				<input
 					type='password'
 					name='password'
-					placeholder='Password'
+					placeholder='Κωδικός'
 					value={form.password}
 					onChange={handleChange}
 					className='w-full p-2 border rounded'
@@ -64,37 +68,33 @@ export default function LoginPage() {
 							className='accent-blue-600'
 							required
 						/>
-						I accept the{' '}
+						Αποδέχομαι την{' '}
 						<a
 							href='/privacy'
 							className='text-blue-600 underline'>
-							Privacy Policy
+							Πολιτική Απορρήτου
 						</a>
 					</label>
 					<a
 						href='/forgot-password'
 						className='text-blue-600 hover:underline'>
-						Forgot password?
+						Ξέχασες τον κωδικό;
 					</a>
 				</div>
-				{toast && (
-					<Notification
-						message={toast.message}
-						type={toast.type}
-					/>
-				)}
+
 				<button
 					type='submit'
-					className='w-full bg-blue-600 text-white py-2 rounded flex justify-center'>
-					{loading ? <LoadingSpinner size={12} /> : 'Login'}
+					className='w-full bg-blue-600 text-white py-2 rounded flex justify-center'
+					disabled={loading}>
+					{loading ? <LoadingSpinner size={12} /> : 'Σύνδεση'}
 				</button>
 			</form>
 			<p className='text-sm mt-4 text-center'>
-				Don’t have an account?{' '}
+				Δεν έχεις λογαριασμό;{' '}
 				<a
 					href='/signup'
 					className='text-blue-600 hover:underline'>
-					Sign up
+					Εγγραφή
 				</a>
 			</p>
 		</div>

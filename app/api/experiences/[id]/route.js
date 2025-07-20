@@ -22,6 +22,7 @@ export async function OPTIONS () {
 
 export async function PUT (req, { params }) {
     const session = await getServerSession(authOptions);
+    const resolvedParams = await params;
 
     if (!session || (session.user.role !== 'partner' && session.user.role !== 'admin')) {
         return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
@@ -31,7 +32,7 @@ export async function PUT (req, { params }) {
     }
 
     try {
-        const id = parseInt(params.id);
+        const id = parseInt(resolvedParams.id);
         const data = await req.json();
 
         if (session.user.role === 'partner') {
@@ -61,6 +62,7 @@ export async function PUT (req, { params }) {
 
 export async function DELETE (req, { params }) {
     const session = await getServerSession(authOptions);
+    const resolvedParams = await params;
 
     if (!session || (session.user.role !== 'partner' && session.user.role !== 'admin')) {
         return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
@@ -70,7 +72,7 @@ export async function DELETE (req, { params }) {
     }
 
     try {
-        const id = parseInt(params.id);
+        const id = parseInt(resolvedParams.id);
 
         if (session.user.role === 'partner') {
             const existing = await getExperienceById(id);

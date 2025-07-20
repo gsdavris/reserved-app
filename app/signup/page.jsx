@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import Notification from '@/components/ui/Notification';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function SignupPage() {
 	const router = useRouter();
@@ -14,9 +14,8 @@ export default function SignupPage() {
 		name: '',
 		accepted: false,
 	});
-	const [error, setError] = useState('');
-	const [success, setSuccess] = useState('');
 	const [loading, setLoading] = useState(false);
+	const { showNotification } = useNotification();
 
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;
@@ -28,20 +27,19 @@ export default function SignupPage() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		setError('');
-		setSuccess('');
 
 		if (form.password !== form.repeatPassword) {
-			setError('Passwords do not match');
+			showNotification('Passwords do not match', 'error');
 			return;
 		}
 
 		if (!form.accepted) {
-			setError('You must accept the privacy policy');
+			showNotification('You must accept the privacy policy', 'error');
 			return;
 		}
 
 		setLoading(true);
+
 		try {
 			const res = await fetch('/api/auth/signup', {
 				method: 'POST',
@@ -55,33 +53,21 @@ export default function SignupPage() {
 
 			if (!res.ok) {
 				const data = await res.json();
-				setError(data.error || 'Signup failed');
+				showNotification(data.error || 'Signup failed', 'error');
 			} else {
-				setSuccess('Signup successful! Redirecting...');
+				showNotification('Signup successful! Redirecting...', 'success');
 				setTimeout(() => router.push('/login'), 1500);
 			}
 		} catch (err) {
-			setError('Something went wrong. Please try again.');
+			showNotification('Something went wrong. Please try again.', 'error');
 		}
+
 		setLoading(false);
 	};
 
 	return (
 		<div className='max-w-md mx-auto mt-48 p-6 bg-white shadow rounded'>
 			<h1 className='text-xl font-bold mb-4'>Sign Up</h1>
-
-			{error && (
-				<Notification
-					type='error'
-					message={error}
-				/>
-			)}
-			{success && (
-				<Notification
-					type='success'
-					message={success}
-				/>
-			)}
 
 			<form
 				onSubmit={handleSubmit}

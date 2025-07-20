@@ -22,6 +22,7 @@ model User {
   createdAt   DateTime     @default(now())
   bookings    Booking[]
   experiences Experience[] @relation("BusinessExperiences")
+  images      Image[]      @relation("UserImages") // <-- αντίστοιχη πλευρά
 }
 
 model Experience {
@@ -36,7 +37,7 @@ model Experience {
   businessId      Int
   business        User      @relation("BusinessExperiences", fields: [businessId], references: [id])
   bookings        Booking[]
-  featuredImageId Int?      @unique
+  featuredImageId Int?     
   featuredImage   Image?    @relation("FeaturedImage", fields: [featuredImageId], references: [id])
   images          Image[]   @relation("GalleryImages")
 }
@@ -57,9 +58,15 @@ model Image {
   url          String
   alt          String?
   caption      String?
+  fileName     String?   
+  mimeType     String?   
+  fileSizeKb   Int?  
   width        Int?
   height       Int?
-  featuredOn   Experience? @relation("FeaturedImage")
+  uploadedById Int?
+  uploadedBy   User?       @relation("UserImages", fields: [uploadedById], references: [id])
+  featuredIn   Experience[] @relation("FeaturedImage")
   experienceId Int?
   experience   Experience? @relation("GalleryImages", fields: [experienceId], references: [id])
+  createdAt    DateTime    @default(now())
 }

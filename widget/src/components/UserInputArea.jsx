@@ -6,14 +6,14 @@ export default function UserInputArea({
 	onQuickSelect,
 }) {
 	return (
-		<div className='my-4 space-y-3'>
+		<div className='tw:my-4 tw:space-y-3'>
 			{/* Quick choices */}
-			<div className='flex flex-wrap gap-2'>
+			<div className='tw:flex tw:flex-wrap tw:gap-2'>
 				{quickChoices.map((choice, idx) => (
 					<button
 						key={idx}
 						onClick={() => onQuickSelect(choice)}
-						className='bg-gray-200 hover:bg-blue-200 text-gray-800 text-xs px-3 py-1 rounded-full transition-colors duration-200'>
+						className='tw:bg-gray-200 tw:hover:bg-blue-200 tw:text-gray-800 tw:text-xs tw:px-3 tw:py-1 tw:rounded-full tw:transition-colors tw:duration-200'>
 						{choice}
 					</button>
 				))}
@@ -23,7 +23,7 @@ export default function UserInputArea({
 				onChange={(e) => onInputChange(e.target.value)}
 				placeholder='Type your request...'
 				rows={2}
-				className='flex-1 w-full rounded-2xl border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-shadow duration-200 shadow'
+				className='tw:flex-1 tw:w-full tw:rounded-2xl tw:border tw:border-gray-300 tw:p-2 tw:focus:outline-none tw:focus:ring-2 tw:focus:ring-blue-400 tw:transition-shadow tw:duration-200 tw:shadow'
 			/>
 		</div>
 	);

@@ -1,16 +1,13 @@
-import { Home, LayoutDashboard, LogOut } from 'lucide-react';
+'use client';
+
+import { navItemsByRole } from '@/lib/navItems';
 import NavItemButton from '@/components/ui/NavItemButton';
 
-const navItems = [
-	{ name: 'Overview', icon: LayoutDashboard, href: '/dashboard' },
-	{ name: 'Experiences', icon: Home, href: '/dashboard/experiences' },
-	{ name: 'Logout', icon: LogOut, href: '/logout' },
-];
+export default function Sidebar({ isOpen, toggleSidebar, userRole }) {
+	const navItems = navItemsByRole[userRole] || [];
 
-export default function Sidebar({ isOpen, toggleSidebar }) {
 	return (
 		<>
-			{/* Overlay for mobile */}
 			{isOpen && (
 				<div
 					className='fixed inset-0 bg-black/30 z-30 md:hidden'
@@ -23,7 +20,6 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
 					isOpen ? 'translate-x-0' : '-translate-x-full'
 				} w-64`}>
 				<div className='flex flex-col h-full'>
-					{/* Header */}
 					<div className='flex items-center justify-between h-16 px-4'>
 						<span className='text-2xl font-bold text-gray-800'>Reserved</span>
 						<button
@@ -33,7 +29,6 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
 						</button>
 					</div>
 
-					{/* Navigation */}
 					<nav className='flex flex-col gap-1 p-2'>
 						{navItems.map((item) => (
 							<NavItemButton

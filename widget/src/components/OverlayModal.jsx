@@ -14,19 +14,19 @@ const quickChoices = [
 export default function OverlayModal({ open, setOpen, loading, experiences }) {
 	return (
 		<div
-			className={`fixed inset-0 bg-black/30 flex items-center justify-center p-4 transition-opacity duration-500 ${
+			className={`tw:fixed tw:inset-0 tw:bg-black/30 tw:flex tw:items-center tw:justify-center tw:p-4 tw:transition-opacity tw:duration-500 ${
 				open
-					? 'opacity-100 pointer-events-auto'
-					: 'opacity-0 pointer-events-none'
+					? 'tw:opacity-100 tw:pointer-events-auto'
+					: 'tw:opacity-0 tw:pointer-events-none'
 			}`}>
 			<div
-				className='relative bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-4 md:p-6 transition-all duration-500 transform'
+				className='tw:relative tw:bg-white tw:rounded-lg tw:shadow-xl tw:w-full tw:max-w-3xl tw:max-h-[90vh] tw:overflow-y-auto tw:p-4 tw:md:p-6 tw:transition-all tw:duration-500 tw:transform'
 				style={{
 					transform: open ? 'scale(1)' : 'scale(0.95)',
 				}}>
 				<button
 					onClick={() => setOpen(false)}
-					className='absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold'>
+					className='tw:absolute tw:top-4 tw:right-4 tw:text-gray-600 tw:hover:text-black tw:text-2xl tw:font-bold'>
 					&times;
 				</button>
 				<AssistantPrompt message='👋 Book now – tell us what you want!' />

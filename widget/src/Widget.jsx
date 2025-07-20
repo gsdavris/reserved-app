@@ -45,4 +45,11 @@ export default function Widget({ businessId }) {
 			{!open && <FloatingButton setOpen={setOpen} />}
 		</>
 	);
+
+	// return (
+	// 	<div className='tw-bg-red-500 tw-text-white tw-p-4 tw-rounded-lg tw-shadow-lg'>
+	// 		<h1 className='tw-text-xl tw-font-bold'>TEST WIDGET</h1>
+	// 		<p>Business ID: {businessId}</p>
+	// 	</div>
+	// );
 }

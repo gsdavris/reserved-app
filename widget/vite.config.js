@@ -16,8 +16,13 @@ export default defineConfig({
         lib: {
             entry: 'src/main.jsx',
             name: 'Widget',
-            fileName: 'widget',
-            formats: ['iife'],
-        }
+            formats: ['es'],
+            fileName: () => `widget.js`,
+        },
+        rollupOptions: {
+            output: {
+                inlineDynamicImports: true,
+            },
+        },
     },
 });
