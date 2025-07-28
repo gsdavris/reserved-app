@@ -75,10 +75,19 @@ export async function DELETE (req, { params }) {
         const id = parseInt(resolvedParams.id);
 
         if (session.user.role === 'partner') {
-            const existing = await getExperienceById(id);
-            if (!existing || existing.businessId !== session.user.id) {
-                return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
-                    status: 403,
+            try {
+                const existing = await getExperienceById(id);
+
+                if (existing.businessId !== session.user.id) {
+                    return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
+                        status: 403,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    });
+                }
+            } catch (err) {
+                console.error('❌ getExperienceById failed:', err.message);
+                return new NextResponse(JSON.stringify({ error: 'Not found' }), {
+                    status: 404,
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 });
             }

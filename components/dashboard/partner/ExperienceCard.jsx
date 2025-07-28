@@ -3,21 +3,23 @@ import EditButton from './EditButton';
 import ClientDeleteButton from './ClientDeleteButton';
 
 export default function ExperienceCard({ experience, onDelete, index }) {
+	const image = experience.featuredImage;
+
 	return (
 		<div className='bg-white p-2 rounded shadow flex items-center justify-between gap-4'>
 			{/* Thumbnail */}
-			{experience.featuredImage?.url && (
-				<div className='w-24 h-24 relative flex-shrink-0 rounded overflow-hidden'>
+			{image?.url && (
+				<div className='relative h-32 w-32 flex-shrink-0 rounded overflow-hidden'>
 					<Image
-						src={experience.featuredImage.url}
-						alt={experience.title}
 						fill
+						src={image.url}
+						alt={experience.title}
+						className='object-cover rounded'
 						priority={index === 0}
-						sizes='96px'
+						unoptimized
 					/>
 				</div>
 			)}
-
 			{/* Content */}
 			<div className='flex-1'>
 				<h2 className='font-semibold'>{experience.title}</h2>

@@ -14,59 +14,91 @@ enum Role {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
-  name        String?
-  password    String?
-  role        Role         @default(customer)
-  createdAt   DateTime     @default(now())
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String?
+  role      Role     @default(customer)
+  createdAt DateTime @default(now())
+
   bookings    Booking[]
   experiences Experience[] @relation("BusinessExperiences")
-  images      Image[]      @relation("UserImages") // <-- αντίστοιχη πλευρά
+  images      Image[]      @relation("UserImages")
+}
+
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String
+  slug        String  @unique
+  description String?
+
+  parentId Int?
+  parent   Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  children Category[] @relation("Subcategories")
+
+  featuredImageId Int?
+  featuredImage   Image? @relation("CategoryFeaturedImage", fields: [featuredImageId], references: [id])
+
+  experiences Experience[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Experience {
-  id              Int       @id @default(autoincrement())
-  title           String
-  description     String
-  location        String
-  category        String
-  price           Float
-  available       Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  businessId      Int
-  business        User      @relation("BusinessExperiences", fields: [businessId], references: [id])
-  bookings        Booking[]
-  featuredImageId Int?     
-  featuredImage   Image?    @relation("FeaturedImage", fields: [featuredImageId], references: [id])
-  images          Image[]   @relation("GalleryImages")
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String
+  location    String
+  price       Float
+  available   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  businessId Int
+  business   User @relation("BusinessExperiences", fields: [businessId], references: [id])
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  bookings Booking[]
+
+  featuredImageId Int?
+  featuredImage   Image?  @relation("ExperienceFeaturedImage", fields: [featuredImageId], references: [id])
+  images          Image[] @relation("ExperienceGalleryImages")
 }
 
 model Booking {
-  id           Int        @id @default(autoincrement())
-  user         User       @relation(fields: [userId], references: [id])
-  userId       Int
-  experience   Experience @relation(fields: [experienceId], references: [id])
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
   experienceId Int
-  date         DateTime
-  status       String     @default("pending")
-  createdAt    DateTime   @default(now())
+  experience   Experience @relation(fields: [experienceId], references: [id])
 }
 
 model Image {
-  id           Int         @id @default(autoincrement())
-  url          String
-  alt          String?
-  caption      String?
-  fileName     String?   
-  mimeType     String?   
-  fileSizeKb   Int?  
-  width        Int?
-  height       Int?
+  id         Int      @id @default(autoincrement())
+  url        String
+  alt        String?
+  caption    String?
+  fileName   String?
+  mimeType   String?
+  fileSizeKb Int?
+  width      Int?
+  height     Int?
+  createdAt  DateTime @default(now())
+
   uploadedById Int?
-  uploadedBy   User?       @relation("UserImages", fields: [uploadedById], references: [id])
-  featuredIn   Experience[] @relation("FeaturedImage")
+  uploadedBy   User? @relation("UserImages", fields: [uploadedById], references: [id])
+
+  featuredInExperiences Experience[] @relation("ExperienceFeaturedImage")
+  featuredInCategories  Category[]   @relation("CategoryFeaturedImage")
+
   experienceId Int?
-  experience   Experience? @relation("GalleryImages", fields: [experienceId], references: [id])
-  createdAt    DateTime    @default(now())
+  experience   Experience? @relation("ExperienceGalleryImages", fields: [experienceId], references: [id])
 }

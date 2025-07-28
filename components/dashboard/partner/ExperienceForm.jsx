@@ -1,32 +1,45 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import CategorySelect from '@/components/ui/CategorySelect';
 import { useNotification } from '@/context/NotificationContext';
 import ImageUploaderSingle from '@/components/ui/ImageUploaderSingle';
+import ImageUploaderMulti from '@/components/ui/ImageUploaderMulti';
 
 export default function ExperienceForm({
 	initialData = {},
-	onSuccess,
+	categories,
 	submitLabel = 'Αποθήκευση',
 }) {
 	const [formData, setFormData] = useState({
 		title: initialData.title || '',
 		description: initialData.description || '',
 		location: initialData.location || '',
-		category: initialData.category || '',
+		categoryId: initialData.category?.id || '',
 		price: initialData.price || '',
 		available: initialData.available ?? true,
 		featuredImageId: initialData.featuredImageId || null,
 	});
 
+	const DEFAULT_CATEGORY_ID = 1;
+	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [imagePreview, setImagePreview] = useState(
 		initialData.featuredImage?.url || null
 	);
 	const [hasImageChanged, setHasImageChanged] = useState(false);
+
+	const [galleryImageIds, setGalleryImageIds] = useState(
+		initialData.images?.map((img) => img.id) || []
+	);
+	const [galleryImagePreviews, setGalleryImagePreviews] = useState(
+		initialData.images?.map((img) => img.url) || []
+	);
+
 	const [uploadSuccess, setUploadSuccess] = useState(false);
 	const { showNotification } = useNotification();
 
@@ -75,6 +88,12 @@ export default function ExperienceForm({
 
 				const uploadData = await uploadRes.json();
 				uploadedImageId = uploadData.imageId;
+
+				setFormData((prev) => ({
+					...prev,
+					featuredImageId: uploadedImageId,
+				}));
+
 				setUploadSuccess(true);
 			}
 
@@ -85,15 +104,38 @@ export default function ExperienceForm({
 				return;
 			}
 
+			//  Gallery validation
+			if (galleryImageIds.length < 4) {
+				showNotification(
+					'Η gallery πρέπει να περιέχει τουλάχιστον 4 εικόνες.',
+					'error'
+				);
+				setLoading(false);
+				return;
+			}
+
+			if (galleryImageIds.length > 10) {
+				showNotification('Μέγιστο πλήθος εικόνων: 10.', 'error');
+				setLoading(false);
+				return;
+			}
+
 			const method = initialData.id ? 'PUT' : 'POST';
 			const url = initialData.id
 				? `/api/experiences/${initialData.id}`
 				: '/api/experiences';
 
+			const { categoryId, ...rest } = formData;
+
 			const res = await fetch(url, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ...formData, featuredImageId: uploadedImageId }),
+				body: JSON.stringify({
+					...rest,
+					categoryId: categoryId ? Number(categoryId) : DEFAULT_CATEGORY_ID,
+					featuredImageId: uploadedImageId,
+					imageIds: galleryImageIds,
+				}),
 			});
 
 			if (!res.ok) {
@@ -103,7 +145,9 @@ export default function ExperienceForm({
 			}
 
 			showNotification('Η εμπειρία αποθηκεύτηκε!', 'success');
-			onSuccess?.();
+			if (!initialData?.id) {
+				router.push('/dashboard/partner/experiences');
+			}
 		} catch (err) {
 			showNotification(err.message, 'error');
 		} finally {
@@ -229,12 +273,12 @@ export default function ExperienceForm({
 						htmlFor='category'>
 						Κατηγορία
 					</label>
-					<input
-						type='text'
-						name='category'
-						id='category'
-						value={formData.category}
-						onChange={handleChange}
+					<CategorySelect
+						categories={categories}
+						value={formData.categoryId}
+						onChange={(val) =>
+							setFormData((prev) => ({ ...prev, categoryId: val }))
+						}
 						className='w-full border rounded px-3 py-2'
 					/>
 				</div>
@@ -251,6 +295,46 @@ export default function ExperienceForm({
 						disabledLabel='Όχι'
 					/>
 				</div>
+			</div>
+			{/* Image Gallery */}
+			<div>
+				<label className='block font-medium mb-1'>Gallery (4–10 εικόνες)</label>
+				<ImageUploaderMulti
+					imageUrls={galleryImagePreviews}
+					onUpload={async (images) => {
+						const newIds = [];
+						const newUrls = [];
+
+						for (const image of images) {
+							if (image instanceof File) {
+								const formData = new FormData();
+								formData.append('file', image);
+
+								const res = await fetch('/api/media', {
+									method: 'POST',
+									body: formData,
+								});
+
+								if (res.ok) {
+									const data = await res.json();
+									newIds.push(data.imageId);
+									newUrls.push(data.imageUrl);
+								}
+							} else if (image?.id && image?.url) {
+								newIds.push(image.id);
+								newUrls.push(image.url);
+							}
+						}
+
+						setGalleryImageIds((prev) => [...prev, ...newIds]);
+						setGalleryImagePreviews((prev) => [...prev, ...newUrls]);
+					}}
+					onRemoveAll={() => {
+						setGalleryImageIds([]);
+						setGalleryImagePreviews([]);
+					}}
+					uploaded
+				/>
 			</div>
 
 			<button
