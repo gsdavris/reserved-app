@@ -5,7 +5,20 @@ import IconButton from '@/components/ui/IconButton';
 import { X } from 'lucide-react';
 import MediaLibrary from '@/components/dashboard/media/MediaLibrary';
 
-export default function MediaSelectModal({ open, onClose, onSelect }) {
+export default function MediaSelectModal({
+	open,
+	onClose,
+	onSelect,
+	closeOnSelect = true,
+	selectedIds = [],
+}) {
+	const handleSelect = (image) => {
+		onSelect(image);
+		if (closeOnSelect) {
+			onClose();
+		}
+	};
+
 	return (
 		<Dialog
 			open={open}
@@ -28,7 +41,8 @@ export default function MediaSelectModal({ open, onClose, onSelect }) {
 						{/* 📦 Reuse MediaLibrary with Select Mode */}
 						<MediaLibrary
 							mode='select'
-							onSelect={onSelect}
+							onSelect={handleSelect}
+							selectedIds={selectedIds}
 						/>
 					</DialogPanel>
 				</div>

@@ -135,15 +135,16 @@ export default function ExperienceForm({
 				setLoading(false);
 				return;
 			}
-			if (galleryImages.length < 4) {
+			const galleryCount = galleryImages.length;
+			if (galleryCount === 1) {
 				showNotification(
-					'Η gallery πρέπει να περιέχει τουλάχιστον 4 εικόνες.',
+					'Η gallery πρέπει να έχει τουλάχιστον 2 εικόνες ή καμία.',
 					'error'
 				);
 				setLoading(false);
 				return;
 			}
-			if (galleryImages.length > 10) {
+			if (galleryCount > 10) {
 				showNotification('Μέγιστο πλήθος εικόνων: 10.', 'error');
 				setLoading(false);
 				return;
@@ -301,7 +302,9 @@ export default function ExperienceForm({
 
 			{/* Gallery */}
 			<div>
-				<label className='block font-medium mb-1'>Gallery (4–10 εικόνες)</label>
+				<label className='block font-medium mb-1'>
+					Gallery (2–10 εικόνες, προαιρετικά)
+				</label>
 				<ImageUploaderMulti
 					images={galleryImages}
 					onUpload={handleUploadGallery}

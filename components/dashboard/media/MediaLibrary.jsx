@@ -10,6 +10,7 @@ import { useNotification } from '@/context/NotificationContext';
 export default function MediaLibrary({
 	mode = 'manage', // 'select' | 'manage'
 	onSelect,
+	selectedIds = [],
 	initialImages = [],
 	initialCursor = null,
 	totalCount = 0,
@@ -204,6 +205,7 @@ export default function MediaLibrary({
 				images={images}
 				mode={mode}
 				onSelect={onSelect}
+				selectedIds={selectedIds}
 				onEdit={handleEdit}
 				onDelete={handleCardDelete}
 				lastImageRef={lastImageRef}

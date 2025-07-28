@@ -4,6 +4,7 @@ export default function ImageGrid({
 	images,
 	mode,
 	onSelect,
+	selectedIds = [],
 	onEdit,
 	onDelete,
 	lastImageRef,
@@ -16,6 +17,7 @@ export default function ImageGrid({
 					image={img}
 					ref={i === images.length - 1 ? lastImageRef : null}
 					onClick={mode === 'select' ? () => onSelect?.(img) : undefined}
+					selected={selectedIds.includes(img.id)}
 					onEdit={mode === 'manage' ? onEdit : undefined}
 					onDelete={mode === 'manage' ? onDelete : undefined}
 					hoverClass={

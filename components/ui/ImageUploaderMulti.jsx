@@ -12,6 +12,7 @@ import {
 	ArrowDown,
 } from 'lucide-react';
 import MediaSelectModal from '@/components/dashboard/media/MediaSelectModal';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function ImageUploaderMulti({
 	images = [], // [{ id, url }, ...]
@@ -23,6 +24,7 @@ export default function ImageUploaderMulti({
 	disabled = false,
 	noLibrary = false,
 }) {
+	const { showNotification } = useNotification();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [uploadingImages, setUploadingImages] = useState([]); // placeholders
 	const [isDragging, setIsDragging] = useState(false);
@@ -64,8 +66,11 @@ export default function ImageUploaderMulti({
 
 	// επιλογή από media library
 	const handleImageSelect = async (image) => {
-		setIsModalOpen(false);
 		if (image?.id && image?.url) {
+			if (images.some((img) => img.id === image.id)) {
+				showNotification('Αυτή η εικόνα είναι ήδη στη gallery.', 'error');
+				return;
+			}
 			setUploadingImages([{ id: 'selected', name: image.filename || 'image' }]);
 			await onUpload([image]);
 			setUploadingImages([]);
@@ -197,6 +202,8 @@ export default function ImageUploaderMulti({
 				open={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
 				onSelect={handleImageSelect}
+				closeOnSelect={false}
+				selectedIds={images.map((img) => img.id)}
 			/>
 			{/* κρυφό input για πολλαπλά αρχεία */}
 			<input

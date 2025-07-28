@@ -3,7 +3,10 @@ import dayjs from 'dayjs';
 import { Pencil, Trash2, Loader2 } from 'lucide-react';
 
 const ImageCard = forwardRef(
-	({ image, onEdit, onDelete, onClick, hoverClass = '' }, ref) => {
+	(
+		{ image, onEdit, onDelete, onClick, selected = false, hoverClass = '' },
+		ref
+	) => {
 		const [isDeleting, setIsDeleting] = useState(false);
 
 		const handleDelete = async (e) => {
@@ -21,7 +24,9 @@ const ImageCard = forwardRef(
 			<div
 				ref={ref}
 				onClick={onClick}
-				className={`relative group rounded-lg overflow-hidden shadow-sm transition ${hoverClass}`}>
+				className={`relative group rounded-lg overflow-hidden ${
+					selected ? 'ring-2 ring-blue-500' : ''
+				} shadow-sm transition ${hoverClass}`}>
 				<img
 					src={image.url}
 					alt={image.alt || 'Image'}
