@@ -23,31 +23,38 @@ export default function ImageUploaderSingle({
 	const [isUploading, setIsUploading] = useState(false);
 	const fileInputRef = useRef();
 
+	// χειρισμός επιλογής αρχείου
 	const handleFileChange = async (e) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
-
 		setIsUploading(true);
-		await onUpload(file);
+		const fd = new FormData();
+		fd.append('file', file);
+		const res = await fetch('/api/media', { method: 'POST', body: fd });
+		if (res.ok) {
+			const data = await res.json();
+			await onUpload({ id: data.imageId, url: data.imageUrl });
+		}
 		setIsUploading(false);
 	};
 
+	// χειρισμός επιλογής εικόνας από το media library
 	const handleImageSelect = async (image) => {
 		setIsModalOpen(false);
-		if (image?.url) {
+		if (image?.id && image?.url) {
 			setIsUploading(true);
-			await onUpload(image);
+			await onUpload({ id: image.id, url: image.url });
 			setIsUploading(false);
 		}
 	};
 
+	// εμφάνιση preview ανάλογα με την κατάσταση
 	const renderPreview = () => {
 		if (isUploading) {
 			return (
 				<div className='relative h-32 w-32 rounded overflow-hidden bg-gray-200 animate-pulse' />
 			);
 		}
-
 		if (!imageUrl) {
 			return (
 				<div className='h-32 w-32 border border-dashed rounded flex flex-col items-center justify-center hover:bg-gray-50 transition'>
@@ -56,7 +63,6 @@ export default function ImageUploaderSingle({
 				</div>
 			);
 		}
-
 		return (
 			<div className='relative h-32 w-32 rounded overflow-hidden border'>
 				<Image
@@ -87,15 +93,13 @@ export default function ImageUploaderSingle({
 	return (
 		<div className='space-y-2'>
 			{renderPreview()}
-
-			{/* Modal */}
+			{/* Modal για media library */}
 			<MediaSelectModal
 				open={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
 				onSelect={handleImageSelect}
 			/>
-
-			{/* File input */}
+			{/* Κρυφό input για ανέβασμα αρχείου */}
 			<input
 				ref={fileInputRef}
 				type='file'
@@ -104,8 +108,7 @@ export default function ImageUploaderSingle({
 				className='hidden'
 				disabled={disabled}
 			/>
-
-			{/* Actions */}
+			{/* Κουμπιά ενεργειών */}
 			<div className='flex gap-2'>
 				{!noLibrary && (
 					<button

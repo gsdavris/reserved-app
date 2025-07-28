@@ -21,28 +21,21 @@ export default function ExperienceForm({
 		categoryId: initialData.category?.id || '',
 		price: initialData.price || '',
 		available: initialData.available ?? true,
-		featuredImageId: initialData.featuredImageId || null,
 	});
+
+	const [featuredImage, setFeaturedImage] = useState({
+		id: initialData.featuredImage?.id || null,
+		url: initialData.featuredImage?.url || null,
+	});
+
+	const [galleryImages, setGalleryImages] = useState(
+		initialData.images?.map((img) => ({ id: img.id, url: img.url })) || []
+	);
 
 	const DEFAULT_CATEGORY_ID = 1;
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
-	const [selectedFile, setSelectedFile] = useState(null);
-	const [imagePreview, setImagePreview] = useState(
-		initialData.featuredImage?.url || null
-	);
-	const [hasImageChanged, setHasImageChanged] = useState(false);
-
-	const [galleryImageIds, setGalleryImageIds] = useState(
-		initialData.images?.map((img) => img.id) || []
-	);
-	const [galleryImagePreviews, setGalleryImagePreviews] = useState(
-		initialData.images?.map((img) => img.url) || []
-	);
-
-	const [uploadSuccess, setUploadSuccess] = useState(false);
 	const { showNotification } = useNotification();
-
 	const MAX_IMAGE_SIZE_MB = 5;
 
 	const handleChange = (e) => {
@@ -53,59 +46,96 @@ export default function ExperienceForm({
 		}));
 	};
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setLoading(true);
-		setUploadSuccess(false);
+	// upload featured
+	const handleUploadFeatured = async (image) => {
+		if (!image) return;
+		if (image instanceof File) {
+			if (image.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+				showNotification(
+					`Η εικόνα πρέπει να είναι έως ${MAX_IMAGE_SIZE_MB}MB.`,
+					'error'
+				);
+				return;
+			}
+			const fd = new FormData();
+			fd.append('file', image);
+			const res = await fetch('/api/media', { method: 'POST', body: fd });
+			if (!res.ok) {
+				showNotification('Αποτυχία ανεβάσματος εικόνας', 'error');
+				return;
+			}
+			const data = await res.json();
+			setFeaturedImage({ id: data.imageId, url: data.imageUrl });
+		} else if (image.id && image.url) {
+			setFeaturedImage({ id: image.id, url: image.url });
+		}
+	};
 
-		try {
-			let uploadedImageId = formData.featuredImageId;
+	const handleRemoveFeatured = () => {
+		setFeaturedImage({ id: null, url: null });
+	};
 
-			// Αν έχει αλλάξει και είναι local File => ανεβάζεις
-			if (hasImageChanged && selectedFile instanceof File) {
-				if (selectedFile.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+	// upload gallery
+	const handleUploadGallery = async (images) => {
+		const uploaded = [];
+		for (const img of images) {
+			if (img instanceof File) {
+				if (img.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
 					showNotification(
 						`Η εικόνα πρέπει να είναι έως ${MAX_IMAGE_SIZE_MB}MB.`,
 						'error'
 					);
-					setLoading(false);
-					return;
+					continue;
 				}
-
-				const imageFormData = new FormData();
-				imageFormData.append('file', selectedFile);
-
-				const uploadRes = await fetch('/api/media', {
-					method: 'POST',
-					body: imageFormData,
-				});
-
-				if (!uploadRes.ok) {
+				const fd = new FormData();
+				fd.append('file', img);
+				const res = await fetch('/api/media', { method: 'POST', body: fd });
+				if (res.ok) {
+					const data = await res.json();
+					uploaded.push({ id: data.imageId, url: data.imageUrl });
+				} else {
 					showNotification('Αποτυχία ανεβάσματος εικόνας', 'error');
-					setLoading(false);
-					return;
 				}
-
-				const uploadData = await uploadRes.json();
-				uploadedImageId = uploadData.imageId;
-
-				setFormData((prev) => ({
-					...prev,
-					featuredImageId: uploadedImageId,
-				}));
-
-				setUploadSuccess(true);
+			} else if (img.id && img.url) {
+				uploaded.push({ id: img.id, url: img.url });
 			}
+		}
+		if (uploaded.length) {
+			setGalleryImages((prev) => [...prev, ...uploaded]);
+		}
+	};
 
-			// Αν δεν υπάρχει ούτε εικόνα ανεβασμένη ούτε επιλεγμένη από Media Library
-			if (!uploadedImageId) {
+	// remove single gallery image
+	const handleRemoveGalleryImage = (index) => {
+		setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	// remove all gallery images
+	const handleRemoveAllGallery = () => {
+		setGalleryImages([]);
+	};
+
+	// move gallery image up or down
+	const handleMoveGalleryImage = (fromIndex, toIndex) => {
+		setGalleryImages((prev) => {
+			const arr = [...prev];
+			const [moved] = arr.splice(fromIndex, 1);
+			arr.splice(toIndex, 0, moved);
+			return arr;
+		});
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+
+		try {
+			if (!featuredImage.id) {
 				showNotification('Παρακαλώ επίλεξε ή ανέβασε εικόνα.', 'error');
 				setLoading(false);
 				return;
 			}
-
-			//  Gallery validation
-			if (galleryImageIds.length < 4) {
+			if (galleryImages.length < 4) {
 				showNotification(
 					'Η gallery πρέπει να περιέχει τουλάχιστον 4 εικόνες.',
 					'error'
@@ -113,8 +143,7 @@ export default function ExperienceForm({
 				setLoading(false);
 				return;
 			}
-
-			if (galleryImageIds.length > 10) {
+			if (galleryImages.length > 10) {
 				showNotification('Μέγιστο πλήθος εικόνων: 10.', 'error');
 				setLoading(false);
 				return;
@@ -124,7 +153,6 @@ export default function ExperienceForm({
 			const url = initialData.id
 				? `/api/experiences/${initialData.id}`
 				: '/api/experiences';
-
 			const { categoryId, ...rest } = formData;
 
 			const res = await fetch(url, {
@@ -133,8 +161,8 @@ export default function ExperienceForm({
 				body: JSON.stringify({
 					...rest,
 					categoryId: categoryId ? Number(categoryId) : DEFAULT_CATEGORY_ID,
-					featuredImageId: uploadedImageId,
-					imageIds: galleryImageIds,
+					featuredImageId: featuredImage.id,
+					imageIds: galleryImages.map((img) => img.id),
 				}),
 			});
 
@@ -159,7 +187,7 @@ export default function ExperienceForm({
 		<form
 			onSubmit={handleSubmit}
 			className='space-y-4'>
-			{/* Εικόνα */}
+			{/* Featured */}
 			<div>
 				<label
 					className='block font-medium mb-1'
@@ -167,38 +195,15 @@ export default function ExperienceForm({
 					Εικόνα
 				</label>
 				<ImageUploaderSingle
-					imageUrl={imagePreview}
-					onUpload={(value) => {
-						if (value instanceof File) {
-							setSelectedFile(value);
-							setImagePreview(URL.createObjectURL(value));
-							setFormData((prev) => ({ ...prev, featuredImageId: null }));
-							setHasImageChanged(true);
-							setUploadSuccess(false);
-						} else if (value?.url && value?.id) {
-							setImagePreview(value.url);
-							setFormData((prev) => ({
-								...prev,
-								featuredImageId: value.id,
-							}));
-							setSelectedFile(null); // clear any local file
-							setHasImageChanged(false);
-							setUploadSuccess(true); // θεωρούμε επιτυχές
-						}
-					}}
-					onRemove={() => {
-						setSelectedFile(null);
-						setImagePreview(null);
-						setFormData((prev) => ({ ...prev, featuredImageId: null }));
-						setHasImageChanged(false);
-						setUploadSuccess(false);
-					}}
+					imageUrl={featuredImage.url}
+					onUpload={handleUploadFeatured}
+					onRemove={handleRemoveFeatured}
+					uploaded={!!featuredImage.id}
 					disabled={loading}
-					uploaded={uploadSuccess}
 				/>
 			</div>
 
-			{/* Υπόλοιπα πεδία */}
+			{/* Τίτλος, περιγραφή, τοποθεσία, τιμή, κατηγορία, διαθεσιμότητα */}
 			<div>
 				<label
 					className='block font-medium mb-1'
@@ -231,8 +236,8 @@ export default function ExperienceForm({
 					className='w-full border rounded px-3 py-2'
 				/>
 			</div>
+
 			<div className='grid sm:grid-cols-2 gap-4'>
-				{/* Τοποθεσία */}
 				<div>
 					<label
 						className='block font-medium mb-1'
@@ -249,7 +254,6 @@ export default function ExperienceForm({
 					/>
 				</div>
 
-				{/* Τιμή */}
 				<div>
 					<label
 						className='block font-medium mb-1'
@@ -266,7 +270,6 @@ export default function ExperienceForm({
 					/>
 				</div>
 
-				{/* Κατηγορία */}
 				<div>
 					<label
 						className='block font-medium mb-1'
@@ -283,7 +286,6 @@ export default function ExperienceForm({
 					/>
 				</div>
 
-				{/* Διαθεσιμότητα */}
 				<div className='flex flex-col justify-end'>
 					<ToggleSwitch
 						checked={formData.available}
@@ -296,44 +298,18 @@ export default function ExperienceForm({
 					/>
 				</div>
 			</div>
-			{/* Image Gallery */}
+
+			{/* Gallery */}
 			<div>
 				<label className='block font-medium mb-1'>Gallery (4–10 εικόνες)</label>
 				<ImageUploaderMulti
-					imageUrls={galleryImagePreviews}
-					onUpload={async (images) => {
-						const newIds = [];
-						const newUrls = [];
-
-						for (const image of images) {
-							if (image instanceof File) {
-								const formData = new FormData();
-								formData.append('file', image);
-
-								const res = await fetch('/api/media', {
-									method: 'POST',
-									body: formData,
-								});
-
-								if (res.ok) {
-									const data = await res.json();
-									newIds.push(data.imageId);
-									newUrls.push(data.imageUrl);
-								}
-							} else if (image?.id && image?.url) {
-								newIds.push(image.id);
-								newUrls.push(image.url);
-							}
-						}
-
-						setGalleryImageIds((prev) => [...prev, ...newIds]);
-						setGalleryImagePreviews((prev) => [...prev, ...newUrls]);
-					}}
-					onRemoveAll={() => {
-						setGalleryImageIds([]);
-						setGalleryImagePreviews([]);
-					}}
+					images={galleryImages}
+					onUpload={handleUploadGallery}
+					onRemoveImage={handleRemoveGalleryImage}
+					onRemoveAll={handleRemoveAllGallery}
+					onMoveImage={handleMoveGalleryImage}
 					uploaded
+					disabled={loading}
 				/>
 			</div>
 
