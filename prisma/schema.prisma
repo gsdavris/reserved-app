@@ -27,45 +27,48 @@ model User {
 }
 
 model Category {
-  id          Int     @id @default(autoincrement())
-  name        String
-  slug        String  @unique
-  description String?
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique
+  description  String?
 
-  parentId Int?
-  parent   Category?  @relation("Subcategories", fields: [parentId], references: [id])
-  children Category[] @relation("Subcategories")
+  parentId    Int?
+  parent      Category? @relation("Subcategories", fields: [parentId], references: [id])
+  children    Category[] @relation("Subcategories")
 
   featuredImageId Int?
-  featuredImage   Image? @relation("CategoryFeaturedImage", fields: [featuredImageId], references: [id])
+  featuredImage   Image?    @relation("CategoryFeaturedImage", fields: [featuredImageId], references: [id])
 
-  experiences Experience[]
+  experiences     Experience[]
+
+  imageGallery    ImageGallery?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Experience {
-  id          Int      @id @default(autoincrement())
-  title       String
-  slug        String   @unique
-  description String
-  location    String
-  price       Float
-  available   Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  title        String
+  slug         String   @unique
+  description  String
+  location     String
+  price        Float
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now())
 
-  businessId Int
-  business   User @relation("BusinessExperiences", fields: [businessId], references: [id])
+  businessId   Int
+  business     User     @relation("BusinessExperiences", fields: [businessId], references: [id])
 
-  categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  category     Category @relation(fields: [categoryId], references: [id])
 
-  bookings Booking[]
+  bookings     Booking[]
 
   featuredImageId Int?
   featuredImage   Image?  @relation("ExperienceFeaturedImage", fields: [featuredImageId], references: [id])
-  images          Image[] @relation("ExperienceGalleryImages")
+
+  imageGallery    ImageGallery?
 }
 
 model Booking {
@@ -82,23 +85,51 @@ model Booking {
 }
 
 model Image {
-  id         Int      @id @default(autoincrement())
-  url        String
-  alt        String?
-  caption    String?
-  fileName   String?
-  mimeType   String?
-  fileSizeKb Int?
-  width      Int?
-  height     Int?
-  createdAt  DateTime @default(now())
+  id            Int           @id @default(autoincrement())
+  url           String
+  alt           String?
+  caption       String?
+  fileName      String?
+  mimeType      String?
+  fileSizeKb    Int?
+  width         Int?
+  height        Int?
+  createdAt     DateTime      @default(now())
 
-  uploadedById Int?
-  uploadedBy   User? @relation("UserImages", fields: [uploadedById], references: [id])
+  uploadedById  Int?
+  uploadedBy    User?         @relation("UserImages", fields: [uploadedById], references: [id])
 
   featuredInExperiences Experience[] @relation("ExperienceFeaturedImage")
   featuredInCategories  Category[]   @relation("CategoryFeaturedImage")
 
-  experienceId Int?
-  experience   Experience? @relation("ExperienceGalleryImages", fields: [experienceId], references: [id])
+  galleryImages GalleryImage[]
+}
+
+model GalleryImage {
+  id            Int         @id @default(autoincrement())
+  order         Int        
+
+  imageGallery  ImageGallery @relation(fields: [imageGalleryId], references: [id])
+  imageGalleryId Int
+
+  image         Image       @relation(fields: [imageId], references: [id])
+  imageId       Int
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([imageGalleryId, imageId])
+}
+
+model ImageGallery {
+  id            Int           @id @default(autoincrement())
+  experience     Experience?   @relation(fields: [experienceId], references: [id])
+  experienceId   Int?          @unique
+
+  category       Category?     @relation(fields: [categoryId], references: [id])
+  categoryId     Int?          @unique
+
+  galleryImages  GalleryImage[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
