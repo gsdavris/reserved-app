@@ -64,7 +64,7 @@ export default function ImageUploaderSingle({
 			);
 		}
 		return (
-			<div className='relative h-32 w-32 rounded overflow-hidden border'>
+			<div className='relative h-32 w-32 rounded overflow-hidden'>
 				<Image
 					src={imageUrl}
 					alt='Preview'

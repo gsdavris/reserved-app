@@ -302,9 +302,7 @@ export default function ExperienceForm({
 
 			{/* Gallery */}
 			<div>
-				<label className='block font-medium mb-1'>
-					Gallery (2–10 εικόνες, προαιρετικά)
-				</label>
+				<label className='block font-medium mb-1'>Gallery (2–10 εικόνες)</label>
 				<ImageUploaderMulti
 					images={galleryImages}
 					onUpload={handleUploadGallery}
@@ -319,7 +317,7 @@ export default function ExperienceForm({
 			<button
 				type='submit'
 				disabled={loading}
-				className='inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition'>
+				className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition'>
 				{loading && (
 					<LoadingSpinner
 						size={16}
