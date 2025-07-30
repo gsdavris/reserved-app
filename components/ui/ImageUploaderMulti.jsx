@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { ImagePlus } from 'lucide-react';
 import useUploadQueue from '@/hooks/useUploadQueue';
 import useImageDragSort from '@/hooks/useImageDragSort';
@@ -9,7 +8,6 @@ import GalleryImageCard from '@/components/ui/GalleryImageCard';
 import AddImageCard from '@/components/ui/AddImageCard';
 import RemoveAllButton from '@/components/ui/RemoveAllButton';
 import MediaSelectModal from '@/components/dashboard/media/MediaSelectModal';
-import FilePicker from '@/components/ui/FilePicker';
 
 export default function ImageUploaderMulti({
 	images = [],
@@ -21,8 +19,6 @@ export default function ImageUploaderMulti({
 	disabled = false,
 	noLibrary = false,
 }) {
-	const filePickerRef = useRef();
-
 	const { uploadingFiles, uploadFiles } = useUploadQueue(onUpload);
 	const { dragIndex, hoverIndex, onDragStart, onDragOver, onDrop, onDragEnd } =
 		useImageDragSort(disabled, onMoveImage);
@@ -36,8 +32,8 @@ export default function ImageUploaderMulti({
 			{images.length === 0 && uploadingFiles.length === 0 && (
 				<AddImageCard
 					isEmpty
-					onClick={() => filePickerRef.current?.click()}
 					onDrop={uploadFiles}
+					onUpload={uploadFiles}
 					disabled={disabled}
 				/>
 			)}
@@ -69,6 +65,12 @@ export default function ImageUploaderMulti({
 							className='relative h-32 w-full sm:w-32 rounded overflow-hidden bg-gray-200 animate-pulse'
 						/>
 					))}
+					{images.length > 0 && uploadingFiles.length === 0 && (
+						<RemoveAllButton
+							onClick={onRemoveAll}
+							disabled={disabled}
+						/>
+					)}
 
 					<AddImageCard
 						isEmpty={false}
@@ -76,23 +78,8 @@ export default function ImageUploaderMulti({
 						onDrop={uploadFiles}
 						disabled={disabled}
 					/>
-
-					{images.length > 0 && uploadingFiles.length === 0 && (
-						<RemoveAllButton
-							onClick={onRemoveAll}
-							disabled={disabled}
-						/>
-					)}
 				</div>
 			)}
-
-			<FilePicker
-				ref={filePickerRef}
-				onFiles={uploadFiles}
-				disabled={disabled}
-				multiple
-			/>
-
 			{!noLibrary && (
 				<div className='flex gap-2'>
 					<button

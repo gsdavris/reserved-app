@@ -1,20 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ImageIcon, Upload } from 'lucide-react';
+import FilePicker from './FilePicker';
 
-/**
- * Αν δεν έχει εικόνες (isEmpty = true), η κάρτα γίνεται πιο ψηλή και καταλαμβάνει όλο το πλάτος.
- * Σε διαφορετική περίπτωση, έχει σταθερό ύψος και (σε desktop) διπλάσιο πλάτος από τις υπόλοιπες εικόνες.
- * Υποστηρίζει drag‑and‑drop και ενημερώνει τον χρήστη με το κατάλληλο μήνυμα.
- */
 export default function AddImageCard({
 	isEmpty = false,
-	onClick,
 	onDrop,
+	onUpload,
 	disabled = false,
 }) {
 	const [isDragActive, setIsDragActive] = useState(false);
+	const filePickerRef = useRef();
 
 	const handleDragEnter = (e) => {
 		e.preventDefault();
@@ -48,7 +45,7 @@ export default function AddImageCard({
 			className={`relative ${heightClass} ${widthClass} border-2 border-dashed rounded flex flex-col items-center justify-center text-center cursor-pointer text-gray-400 hover:bg-gray-50 ${
 				isDragActive ? 'border-blue-500 bg-blue-50 text-blue-500' : ''
 			}`}
-			onClick={!disabled ? onClick : undefined}
+			onClick={!disabled ? () => filePickerRef.current?.click() : undefined}
 			onDragEnter={handleDragEnter}
 			onDragLeave={handleDragLeave}
 			onDragOver={handleDragOver}
@@ -56,24 +53,27 @@ export default function AddImageCard({
 			<ImageIcon className='w-6 h-6 mb-1' />
 			{/* Διαφορετικό μήνυμα όταν είναι κενή η gallery */}
 			{isEmpty ? (
-				<p className='text-sm flex items-center gap-2'>
-					Σύρε εικόνες εδώ ή
-					<button
-						type='button'
-						className='inline-flex items-center gap-1 text-blue-600 hover:underline disabled:opacity-50'
-						disabled={disabled}>
-						<Upload className='w-4 h-4' /> Ανέβασμα
-					</button>
+				<p className='text-sm flex items-center gap-2 text-center'>
+					<span className='hidden sm:inline'>Σύρε εικόνες εδώ ή</span>
+					<span className='inline sm:hidden'>Ανεβάστε εικόνες</span>
+					<FilePicker
+						ref={filePickerRef}
+						onFiles={onUpload}
+						label='Ανέβασμα'
+						disabled={disabled}
+						multiple
+					/>
 				</p>
 			) : (
-				<p className='text-xs flex items-center gap-2'>
-					Σύρε εικόνες εδώ ή
-					<button
-						type='button'
-						className='inline-flex items-center gap-1 text-blue-600 hover:underline disabled:opacity-50'
-						disabled={disabled}>
-						<Upload className='w-4 h-4' /> Προσθήκη
-					</button>
+				<p className='text-xs flex items-center gap-2 text-center'>
+					<span className='hidden sm:inline'>Σύρε εικόνες εδώ ή</span>
+					<FilePicker
+						ref={filePickerRef}
+						onFiles={onUpload}
+						label='Ανεβάστε εικόνες'
+						disabled={disabled}
+						multiple
+					/>
 				</p>
 			)}
 		</div>

@@ -1,15 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import { useRef, useState } from 'react';
-import {
-	CheckCircle2,
-	ImageIcon,
-	Trash2,
-	Upload,
-	ImagePlus,
-} from 'lucide-react';
+import { Upload, ImagePlus } from 'lucide-react';
+
+import useMediaPicker from '@/hooks/useMediaPicker';
+import FilePicker from '@/components/ui/FilePicker';
 import MediaSelectModal from '@/components/dashboard/media/MediaSelectModal';
+import ImagePreviewBox from '@/components/ui/ImagePreviewBox';
 
 export default function ImageUploaderSingle({
 	imageUrl,
@@ -19,13 +16,25 @@ export default function ImageUploaderSingle({
 	disabled = false,
 	noLibrary = false,
 }) {
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [isUploading, setIsUploading] = useState(false);
 	const fileInputRef = useRef();
+	const [isUploading, setIsUploading] = useState(false);
 
-	// χειρισμός επιλογής αρχείου
-	const handleFileChange = async (e) => {
-		const file = e.target.files?.[0];
+	// Picker with single image
+	const mediaPicker = useMediaPicker(
+		imageUrl ? [{ id: '', url: imageUrl }] : [],
+		async (images) => {
+			const image = images?.[0];
+			if (image?.id && image?.url) {
+				setIsUploading(true);
+				await onUpload({ id: image.id, url: image.url });
+				setIsUploading(false);
+			}
+		}
+	);
+
+	// File upload (single)
+	const handleUploadFromFile = async (files) => {
+		const file = files?.[0];
 		if (!file) return;
 		setIsUploading(true);
 		const fd = new FormData();
@@ -38,86 +47,41 @@ export default function ImageUploaderSingle({
 		setIsUploading(false);
 	};
 
-	// χειρισμός επιλογής εικόνας από το media library
-	const handleImageSelect = async (image) => {
-		setIsModalOpen(false);
-		if (image?.id && image?.url) {
-			setIsUploading(true);
-			await onUpload({ id: image.id, url: image.url });
-			setIsUploading(false);
-		}
-	};
-
-	// εμφάνιση preview ανάλογα με την κατάσταση
-	const renderPreview = () => {
-		if (isUploading) {
-			return (
-				<div className='relative h-32 w-32 rounded overflow-hidden bg-gray-200 animate-pulse' />
-			);
-		}
-		if (!imageUrl) {
-			return (
-				<div className='h-32 w-32 border border-dashed rounded flex flex-col items-center justify-center hover:bg-gray-50 transition'>
-					<ImageIcon className='w-6 h-6 text-gray-400' />
-					<span className='text-xs text-gray-500 mt-1'>Επέλεξε εικόνα</span>
-				</div>
-			);
-		}
-		return (
-			<div className='relative h-32 w-32 rounded overflow-hidden'>
-				<Image
-					src={imageUrl}
-					alt='Preview'
-					fill
-					sizes='128px'
-					className='object-cover'
-					priority
-				/>
-				{uploaded && (
-					<div className='absolute top-1 left-1 bg-green-600 text-white p-1 rounded-full shadow-md'>
-						<CheckCircle2 className='w-4 h-4' />
-					</div>
-				)}
-				<button
-					type='button'
-					onClick={onRemove}
-					className='cursor-pointer absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full'
-					title='Αφαίρεση εικόνας'
-					disabled={disabled}>
-					<Trash2 className='w-4 h-4' />
-				</button>
-			</div>
-		);
-	};
-
 	return (
 		<div className='space-y-2'>
-			{renderPreview()}
-			{/* Modal για media library */}
-			<MediaSelectModal
-				open={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				onSelect={handleImageSelect}
-			/>
-			{/* Κρυφό input για ανέβασμα αρχείου */}
-			<input
-				ref={fileInputRef}
-				type='file'
-				accept='image/*'
-				onChange={handleFileChange}
-				className='hidden'
+			<ImagePreviewBox
+				imageUrl={imageUrl}
+				isUploading={isUploading}
+				uploaded={uploaded}
 				disabled={disabled}
+				onRemove={onRemove}
 			/>
-			{/* Κουμπιά ενεργειών */}
+
+			{/* File upload hidden input */}
+			<FilePicker
+				ref={fileInputRef}
+				onFiles={handleUploadFromFile}
+				disabled={disabled || isUploading}
+				label={null}
+				multiple={false} // <- ΕΔΩ ο περιορισμός
+			/>
+
+			{/* Modal for Media Library */}
+			<MediaSelectModal
+				open={mediaPicker.isOpen}
+				onClose={mediaPicker.closePicker}
+				onSelect={mediaPicker.handleSelect}
+			/>
+
+			{/* Action Buttons */}
 			<div className='flex gap-2'>
 				{!noLibrary && (
 					<button
 						type='button'
-						onClick={() => setIsModalOpen(true)}
+						onClick={mediaPicker.openPicker}
 						className='inline-flex items-center gap-1 text-sm text-blue-600 hover:underline disabled:opacity-50'
 						disabled={disabled || isUploading}>
-						<ImagePlus className='w-4 h-4' />
-						Επιλογή από Media Library
+						<ImagePlus className='w-4 h-4' /> Επιλογή από Media Library
 					</button>
 				)}
 				<button
@@ -125,8 +89,7 @@ export default function ImageUploaderSingle({
 					onClick={() => fileInputRef.current?.click()}
 					className='inline-flex items-center gap-1 text-sm text-blue-600 hover:underline disabled:opacity-50'
 					disabled={disabled || isUploading}>
-					<Upload className='w-4 h-4' />
-					Ανέβασμα
+					<Upload className='w-4 h-4' /> Ανέβασμα
 				</button>
 			</div>
 		</div>

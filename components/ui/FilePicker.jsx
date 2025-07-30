@@ -1,14 +1,17 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, forwardRef, useImperativeHandle } from 'react';
 import { Upload } from 'lucide-react';
 
-export default function FilePicker({
-	onFiles,
-	multiple = true,
-	disabled = false,
-}) {
+const FilePicker = forwardRef(function FilePicker(
+	{ onFiles, label = 'Επιλέξτε εικόνες', multiple = true, disabled = false },
+	ref
+) {
 	const fileInputRef = useRef();
+
+	useImperativeHandle(ref, () => ({
+		click: () => fileInputRef.current?.click(),
+	}));
 
 	const handleChange = (e) => {
 		const files = Array.from(e.target.files || []).filter((f) =>
@@ -16,7 +19,6 @@ export default function FilePicker({
 		);
 		if (files.length) {
 			onFiles(files);
-			// reset input για να μπορεί να ανέβει ξανά το ίδιο αρχείο αν χρειαστεί
 			e.target.value = '';
 		}
 	};
@@ -32,13 +34,17 @@ export default function FilePicker({
 				multiple={multiple}
 				disabled={disabled}
 			/>
-			<button
-				type='button'
-				onClick={() => !disabled && fileInputRef.current?.click()}
-				className='inline-flex items-center gap-1 text-sm text-blue-600 hover:underline disabled:opacity-50'
-				disabled={disabled}>
-				<Upload className='w-4 h-4' /> Ανέβασμα
-			</button>
+			{label && (
+				<button
+					type='button'
+					onClick={() => !disabled && fileInputRef.current?.click()}
+					className='inline-flex items-center gap-1 text-sm text-blue-600 hover:underline disabled:opacity-50'
+					disabled={disabled}>
+					<Upload className='w-4 h-4' /> {label}
+				</button>
+			)}
 		</>
 	);
-}
+});
+
+export default FilePicker;
