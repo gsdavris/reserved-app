@@ -12,7 +12,7 @@ export default async function MediaLibraryPage() {
 	if (!session || !session.user) return redirect('/login');
 
 	const [imageData, months] = await Promise.all([
-		getImages({ uploadedById: session.user.id, limit: 40 }),
+		getImages({ uploadedById: session.user.id, limit: 10 }),
 		getAvailableMediaMonths(session.user.id),
 	]);
 
