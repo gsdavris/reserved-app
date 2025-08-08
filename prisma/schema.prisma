@@ -52,8 +52,8 @@ model Experience {
   title        String
   slug         String   @unique
   description  String
-  location     String
-  price        Float
+  locationId  Int?
+  location    Location? @relation(fields: [locationId], references: [id])
   available    Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -69,6 +69,8 @@ model Experience {
   featuredImage   Image?  @relation("ExperienceFeaturedImage", fields: [featuredImageId], references: [id])
 
   imageGallery    ImageGallery?
+
+  pricing      ExperiencePricing? 
 }
 
 model Booking {
@@ -132,4 +134,46 @@ model ImageGallery {
   galleryImages  GalleryImage[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+}
+
+
+
+model ExperiencePricing {
+  id           Int         @id @default(autoincrement())
+  experience   Experience  @relation(fields: [experienceId], references: [id])
+  experienceId Int         @unique
+
+  currency     String      @default("EUR")
+  options      Json        
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+enum DurationUnit {
+  day
+  hour
+  half_day
+  event
+  custom
+}
+
+model Location {
+  id          Int          @id @default(autoincrement())
+  name        String
+  type        LocationType
+  coordinates Json?        //  { lat, lng }
+  boundingBox Json?        //  { sw: { lat, lng }, ne: { lat, lng } }
+  placeId     String?
+  country     String?
+  locality    String?
+  adminArea   String?
+
+  experiences Experience[] 
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum LocationType {
+  point
+  region
 }

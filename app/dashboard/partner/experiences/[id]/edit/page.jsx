@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getExperienceById } from '@/lib/handlers/experienceHandlers';
 import { getCategoryOptions } from '@/lib/handlers/categoryHandlers';
-import ExperienceForm from '@/components/dashboard/partner/ExperienceForm';
+import EditExperienceClient from '@/components/dashboard/partner/EditExperienceClient';
 
 export default async function EditExperiencePage({ params }) {
 	const session = await getServerSession(authOptions);
@@ -28,9 +28,9 @@ export default async function EditExperiencePage({ params }) {
 	const categories = await getCategoryOptions();
 
 	return (
-		<div>
+		<div className='p-4'>
 			<h1 className='text-2xl font-semibold mb-4'>Επεξεργασία Εμπειρίας</h1>
-			<ExperienceForm
+			<EditExperienceClient
 				initialData={experience}
 				categories={categories}
 			/>

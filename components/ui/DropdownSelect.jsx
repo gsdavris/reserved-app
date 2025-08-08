@@ -68,7 +68,7 @@ export default function DropdownSelect({
 					<ChevronDown className='h-4 w-4 text-gray-500' />
 				</ListboxButton>
 
-				<ListboxOptions className='absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded border bg-white shadow-sm'>
+				<ListboxOptions className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded border bg-white shadow-lg ring-1 ring-black/5'>
 					{renderOptions()}
 				</ListboxOptions>
 			</Listbox>

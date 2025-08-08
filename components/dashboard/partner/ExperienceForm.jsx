@@ -8,19 +8,36 @@ import CategorySelect from '@/components/ui/CategorySelect';
 import { useNotification } from '@/context/NotificationContext';
 import ImageUploaderSingle from '@/components/ui/ImageUploaderSingle';
 import ImageUploaderMulti from '@/components/ui/ImageUploaderMulti';
+import PricingBuilderSection from '../pricing/PricingBuilderSection';
+import { validatePricingOption } from '@/lib/validators/pricing';
+import LocationSection from '../location/LocationSection';
 
 export default function ExperienceForm({
 	initialData = {},
 	categories,
 	submitLabel = 'Αποθήκευση',
 }) {
+	const defaultPricing = {
+		currency: 'EUR',
+		options: [],
+	};
+
 	const [formData, setFormData] = useState({
 		title: initialData.title || '',
 		description: initialData.description || '',
-		location: initialData.location || '',
+		location: initialData.location || {
+			name: '',
+			type: '',
+			coordinates: null,
+			boundingBox: null,
+		},
 		categoryId: initialData.category?.id || '',
-		price: initialData.price || '',
 		available: initialData.available ?? true,
+		pricing: {
+			...defaultPricing,
+			...(initialData.pricing || {}),
+			options: initialData.pricing?.options || [],
+		},
 	});
 
 	const [featuredImage, setFeaturedImage] = useState({
@@ -46,7 +63,6 @@ export default function ExperienceForm({
 		}));
 	};
 
-	// upload featured
 	const handleUploadFeatured = async (image) => {
 		if (!image) return;
 		if (image instanceof File) {
@@ -75,7 +91,6 @@ export default function ExperienceForm({
 		setFeaturedImage({ id: null, url: null });
 	};
 
-	// upload gallery
 	const handleUploadGallery = async (images) => {
 		const uploaded = [];
 		for (const img of images) {
@@ -105,17 +120,14 @@ export default function ExperienceForm({
 		}
 	};
 
-	// remove single gallery image
 	const handleRemoveGalleryImage = (index) => {
 		setGalleryImages((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	// remove all gallery images
 	const handleRemoveAllGallery = () => {
 		setGalleryImages([]);
 	};
 
-	// move gallery image up or down
 	const handleMoveGalleryImage = (fromIndex, toIndex) => {
 		setGalleryImages((prev) => {
 			const arr = [...prev];
@@ -135,6 +147,7 @@ export default function ExperienceForm({
 				setLoading(false);
 				return;
 			}
+
 			const galleryCount = galleryImages.length;
 			if (galleryCount === 1) {
 				showNotification(
@@ -150,26 +163,71 @@ export default function ExperienceForm({
 				return;
 			}
 
+			// ✅ Validation for pricing options
+			const allErrors =
+				formData.pricing.options?.flatMap((option, idx) =>
+					validatePricingOption(option).map((msg) => `#${idx + 1}: ${msg}`)
+				) || [];
+
+			if (allErrors.length > 0) {
+				showNotification(allErrors.join('\n'), 'error');
+				setLoading(false);
+				return;
+			}
+
+			// API call
 			const method = initialData.id ? 'PUT' : 'POST';
 			const url = initialData.id
 				? `/api/experiences/${initialData.id}`
 				: '/api/experiences';
-			const { categoryId, ...rest } = formData;
 
 			const res = await fetch(url, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					...rest,
-					categoryId: categoryId ? Number(categoryId) : DEFAULT_CATEGORY_ID,
+					title: formData.title,
+					description: formData.description,
+					location: formData.location,
+					categoryId: formData.categoryId
+						? Number(formData.categoryId)
+						: DEFAULT_CATEGORY_ID,
+					available: formData.available,
 					featuredImageId: featuredImage.id,
 					imageIds: galleryImages.map((img) => img.id),
+					pricing: {
+						currency: formData.pricing.currency,
+						options: formData.pricing.options.map(
+							({
+								id,
+								label,
+								basePrice,
+								durationUnit,
+								perPerson,
+								isActive,
+								availableFrom,
+								availableTo,
+							}) => ({
+								id,
+								label,
+								basePrice,
+								durationUnit,
+								perPerson,
+								isActive,
+								availableFrom,
+								availableTo,
+							})
+						),
+					},
 				}),
 			});
 
 			if (!res.ok) {
-				showNotification('Αποτυχία αποθήκευσης.', 'error');
-				setLoading(false);
+				let errorMessage = 'Αποτυχία αποθήκευσης.';
+				try {
+					const errorData = await res.json();
+					errorMessage = errorData.message || errorMessage;
+				} catch {}
+				showNotification(errorMessage, 'error');
 				return;
 			}
 
@@ -178,7 +236,10 @@ export default function ExperienceForm({
 				router.push('/dashboard/partner/experiences');
 			}
 		} catch (err) {
-			showNotification(err.message, 'error');
+			showNotification(
+				err.message || 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.',
+				'error'
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -188,13 +249,8 @@ export default function ExperienceForm({
 		<form
 			onSubmit={handleSubmit}
 			className='space-y-4'>
-			{/* Featured */}
 			<div>
-				<label
-					className='block font-medium mb-1'
-					htmlFor='image'>
-					Εικόνα
-				</label>
+				<label className='block font-medium mb-1'>Εικόνα</label>
 				<ImageUploaderSingle
 					imageUrl={featuredImage.url}
 					onUpload={handleUploadFeatured}
@@ -204,17 +260,11 @@ export default function ExperienceForm({
 				/>
 			</div>
 
-			{/* Τίτλος, περιγραφή, τοποθεσία, τιμή, κατηγορία, διαθεσιμότητα */}
 			<div>
-				<label
-					className='block font-medium mb-1'
-					htmlFor='title'>
-					Τίτλος
-				</label>
+				<label className='block font-medium mb-1'>Τίτλος</label>
 				<input
 					type='text'
 					name='title'
-					id='title'
 					value={formData.title}
 					onChange={handleChange}
 					className='w-full border rounded px-3 py-2'
@@ -223,14 +273,9 @@ export default function ExperienceForm({
 			</div>
 
 			<div>
-				<label
-					className='block font-medium mb-1'
-					htmlFor='description'>
-					Περιγραφή
-				</label>
+				<label className='block font-medium mb-1'>Περιγραφή</label>
 				<textarea
 					name='description'
-					id='description'
 					rows='4'
 					value={formData.description}
 					onChange={handleChange}
@@ -238,71 +283,22 @@ export default function ExperienceForm({
 				/>
 			</div>
 
-			<div className='grid sm:grid-cols-2 gap-4'>
-				<div>
-					<label
-						className='block font-medium mb-1'
-						htmlFor='location'>
-						Τοποθεσία
-					</label>
-					<input
-						type='text'
-						name='location'
-						id='location'
-						value={formData.location}
-						onChange={handleChange}
-						className='w-full border rounded px-3 py-2'
-					/>
-				</div>
-
-				<div>
-					<label
-						className='block font-medium mb-1'
-						htmlFor='price'>
-						Τιμή
-					</label>
-					<input
-						type='number'
-						name='price'
-						id='price'
-						value={formData.price}
-						onChange={handleChange}
-						className='w-full border rounded px-3 py-2'
-					/>
-				</div>
-
-				<div>
-					<label
-						className='block font-medium mb-1'
-						htmlFor='category'>
-						Κατηγορία
-					</label>
-					<CategorySelect
-						categories={categories}
-						value={formData.categoryId}
-						onChange={(val) =>
-							setFormData((prev) => ({ ...prev, categoryId: val }))
-						}
-						className='w-full border rounded px-3 py-2'
-					/>
-				</div>
-
-				<div className='flex flex-col justify-end'>
-					<ToggleSwitch
-						checked={formData.available}
-						onChange={(value) =>
-							setFormData((prev) => ({ ...prev, available: value }))
-						}
-						label='Διαθεσιμότητα'
-						enabledLabel='Ναι'
-						disabledLabel='Όχι'
-					/>
-				</div>
+			<div>
+				<label className='block font-medium mb-1'>Κατηγορία</label>
+				<CategorySelect
+					categories={categories}
+					value={formData.categoryId}
+					onChange={(val) =>
+						setFormData((prev) => ({ ...prev, categoryId: val }))
+					}
+					className='w-full'
+				/>
 			</div>
 
-			{/* Gallery */}
 			<div>
-				<label className='block font-medium mb-1'>Gallery (2–10 εικόνες)</label>
+				<label className='block font-medium mb-1'>
+					Image Gallery (2–10 εικόνες)
+				</label>
 				<ImageUploaderMulti
 					images={galleryImages}
 					onUpload={handleUploadGallery}
@@ -311,6 +307,38 @@ export default function ExperienceForm({
 					onMoveImage={handleMoveGalleryImage}
 					uploaded
 					disabled={loading}
+				/>
+			</div>
+
+			<PricingBuilderSection
+				pricing={formData.pricing}
+				setPricing={(newPricing) =>
+					setFormData((prev) => ({
+						...prev,
+						pricing: newPricing,
+					}))
+				}
+			/>
+
+			<div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+				<LocationSection
+					location={formData.location}
+					setLocation={(loc) =>
+						setFormData((prev) => ({ ...prev, location: loc }))
+					}
+				/>
+			</div>
+
+			<div>
+				<label className='block font-medium mb-1'>Διαθεσιμότητα</label>
+				<ToggleSwitch
+					checked={formData.available}
+					onChange={(val) =>
+						setFormData((prev) => ({ ...prev, available: val }))
+					}
+					label='Διαθέσιμο'
+					enabledLabel='Ναι'
+					disabledLabel='Όχι'
 				/>
 			</div>
 
