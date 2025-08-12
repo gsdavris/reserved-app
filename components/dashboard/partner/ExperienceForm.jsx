@@ -1,26 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import CategorySelect from '@/components/ui/CategorySelect';
 import { useNotification } from '@/context/NotificationContext';
+import FormSection from '@/components/ui/FormSection';
 import ImageUploaderSingle from '@/components/ui/ImageUploaderSingle';
 import ImageUploaderMulti from '@/components/ui/ImageUploaderMulti';
 import PricingBuilderSection from '../pricing/PricingBuilderSection';
 import { validatePricingOption } from '@/lib/validators/pricing';
 import LocationSection from '../location/LocationSection';
+import { Save } from 'lucide-react';
 
 export default function ExperienceForm({
 	initialData = {},
 	categories,
 	submitLabel = 'Αποθήκευση',
+	mode = 'edit', // 'create' or 'edit'
 }) {
-	const defaultPricing = {
-		currency: 'EUR',
-		options: [],
-	};
+	const defaultPricing = { currency: 'EUR', options: [] };
 
 	const [formData, setFormData] = useState({
 		title: initialData.title || '',
@@ -87,9 +87,7 @@ export default function ExperienceForm({
 		}
 	};
 
-	const handleRemoveFeatured = () => {
-		setFeaturedImage({ id: null, url: null });
-	};
+	const handleRemoveFeatured = () => setFeaturedImage({ id: null, url: null });
 
 	const handleUploadGallery = async (images) => {
 		const uploaded = [];
@@ -115,18 +113,14 @@ export default function ExperienceForm({
 				uploaded.push({ id: img.id, url: img.url });
 			}
 		}
-		if (uploaded.length) {
-			setGalleryImages((prev) => [...prev, ...uploaded]);
-		}
+		if (uploaded.length) setGalleryImages((prev) => [...prev, ...uploaded]);
 	};
 
 	const handleRemoveGalleryImage = (index) => {
 		setGalleryImages((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const handleRemoveAllGallery = () => {
-		setGalleryImages([]);
-	};
+	const handleRemoveAllGallery = () => setGalleryImages([]);
 
 	const handleMoveGalleryImage = (fromIndex, toIndex) => {
 		setGalleryImages((prev) => {
@@ -137,10 +131,24 @@ export default function ExperienceForm({
 		});
 	};
 
+	const handleSetLocation = useCallback((loc) => {
+		setFormData((prev) => {
+			// avoid pointless updates
+			const same =
+				prev.location?.name === loc?.name &&
+				prev.location?.type === loc?.type &&
+				JSON.stringify(prev.location?.coordinates) ===
+					JSON.stringify(loc?.coordinates) &&
+				JSON.stringify(prev.location?.boundingBox) ===
+					JSON.stringify(loc?.boundingBox);
+
+			return same ? prev : { ...prev, location: loc };
+		});
+	}, []);
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-
 		try {
 			if (!featuredImage.id) {
 				showNotification('Παρακαλώ επίλεξε ή ανέβασε εικόνα.', 'error');
@@ -163,19 +171,16 @@ export default function ExperienceForm({
 				return;
 			}
 
-			// ✅ Validation for pricing options
 			const allErrors =
 				formData.pricing.options?.flatMap((option, idx) =>
 					validatePricingOption(option).map((msg) => `#${idx + 1}: ${msg}`)
 				) || [];
-
 			if (allErrors.length > 0) {
 				showNotification(allErrors.join('\n'), 'error');
 				setLoading(false);
 				return;
 			}
 
-			// API call
 			const method = initialData.id ? 'PUT' : 'POST';
 			const url = initialData.id
 				? `/api/experiences/${initialData.id}`
@@ -232,9 +237,7 @@ export default function ExperienceForm({
 			}
 
 			showNotification('Η εμπειρία αποθηκεύτηκε!', 'success');
-			if (!initialData?.id) {
-				router.push('/dashboard/partner/experiences');
-			}
+			if (!initialData?.id) router.push('/dashboard/partner/experiences');
 		} catch (err) {
 			showNotification(
 				err.message || 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.',
@@ -248,114 +251,170 @@ export default function ExperienceForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className='space-y-4'>
-			<div>
-				<label className='block font-medium mb-1'>Εικόνα</label>
-				<ImageUploaderSingle
-					imageUrl={featuredImage.url}
-					onUpload={handleUploadFeatured}
-					onRemove={handleRemoveFeatured}
-					uploaded={!!featuredImage.id}
+			className='mx-auto space-y-4'>
+			{/* Page title */}
+			<div className='flex items-center justify-between'>
+				<h2 className='text-xl sm:text-2xl font-semibold'>
+					{mode === 'edit'
+						? 'Επεξεργασία Εμπειρίας'
+						: 'Δημιουργία Νέας Εμπειρίας'}
+				</h2>
+				<button
+					type='submit'
 					disabled={loading}
-				/>
+					className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-60'>
+					{loading ? (
+						<LoadingSpinner
+							size={16}
+							color='border-white'
+							topColor='border-t-blue-600'
+							borderWidth={2}
+						/>
+					) : (
+						<Save size={18} />
+					)}
+					{submitLabel}
+				</button>
 			</div>
 
-			<div>
-				<label className='block font-medium mb-1'>Τίτλος</label>
-				<input
-					type='text'
-					name='title'
-					value={formData.title}
-					onChange={handleChange}
-					className='w-full border rounded px-3 py-2'
-					required
-				/>
+			{/* Grid: main + sidebar */}
+			<div className='grid grid-cols-12 gap-4'>
+				{/* MAIN COLUMN */}
+				<div className='col-span-12 lg:col-span-8 space-y-4'>
+					<FormSection
+						variant='simple'
+						title='Τίτλος'>
+						<input
+							type='text'
+							name='title'
+							value={formData.title}
+							onChange={handleChange}
+							className='w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+							required
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='simple'
+						title='Περιγραφή'
+						description='Σύντομη και καθαρή περιγραφή της εμπειρίας.'>
+						<textarea
+							name='description'
+							rows='6'
+							value={formData.description}
+							onChange={handleChange}
+							className='w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+						/>
+					</FormSection>
+				</div>
+
+				{/* SIDEBAR */}
+				<aside className='col-span-12 lg:col-span-4 space-y-4  self-start'>
+					<FormSection
+						variant='simple'
+						title='Εικόνα'>
+						<ImageUploaderSingle
+							imageUrl={featuredImage.url}
+							onUpload={handleUploadFeatured}
+							onRemove={handleRemoveFeatured}
+							uploaded={!!featuredImage.id}
+							disabled={loading}
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='simple'
+						title='Κατηγορία'>
+						<CategorySelect
+							categories={categories}
+							value={formData.categoryId}
+							onChange={(val) =>
+								setFormData((prev) => ({ ...prev, categoryId: val }))
+							}
+							className='w-full'
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='simple'
+						title='Διαθεσιμότητα'>
+						<ToggleSwitch
+							checked={formData.available}
+							onChange={(val) =>
+								setFormData((prev) => ({ ...prev, available: val }))
+							}
+							label='Διαθέσιμο'
+							enabledLabel='Ναι'
+							disabledLabel='Όχι'
+						/>
+					</FormSection>
+				</aside>
+
+				{/* FULL-WIDTH, COMPLEX SECTIONS */}
+				<div className='col-span-12'>
+					<FormSection
+						variant='collapsible'
+						title='Τιμολόγηση'
+						description='Διαχειρίσου πολλαπλές επιλογές τιμής, διάρκειας και διαθεσιμότητας.'
+						defaultOpen>
+						<PricingBuilderSection
+							pricing={formData.pricing}
+							setPricing={(newPricing) =>
+								setFormData((prev) => ({ ...prev, pricing: newPricing }))
+							}
+						/>
+					</FormSection>
+				</div>
+
+				<div className='col-span-12'>
+					<FormSection
+						variant='collapsible'
+						title='Τοποθεσία'
+						description='Επίλεξε σημείο ή περιοχή στο χάρτη.'
+						defaultOpen>
+						<LocationSection
+							location={formData.location}
+							setLocation={handleSetLocation}
+						/>
+					</FormSection>
+				</div>
+
+				<div className='col-span-12'>
+					<FormSection
+						variant='collapsible'
+						title='Image Gallery (2–10 εικόνες)'
+						description='Σύρε-άφησε για αλλαγή σειράς.'
+						defaultOpen>
+						<ImageUploaderMulti
+							images={galleryImages}
+							onUpload={handleUploadGallery}
+							onRemoveImage={handleRemoveGalleryImage}
+							onRemoveAll={handleRemoveAllGallery}
+							onMoveImage={handleMoveGalleryImage}
+							uploaded
+							disabled={loading}
+						/>
+					</FormSection>
+				</div>
 			</div>
 
-			<div>
-				<label className='block font-medium mb-1'>Περιγραφή</label>
-				<textarea
-					name='description'
-					rows='4'
-					value={formData.description}
-					onChange={handleChange}
-					className='w-full border rounded px-3 py-2'
-				/>
-			</div>
-
-			<div>
-				<label className='block font-medium mb-1'>Κατηγορία</label>
-				<CategorySelect
-					categories={categories}
-					value={formData.categoryId}
-					onChange={(val) =>
-						setFormData((prev) => ({ ...prev, categoryId: val }))
-					}
-					className='w-full'
-				/>
-			</div>
-
-			<div>
-				<label className='block font-medium mb-1'>
-					Image Gallery (2–10 εικόνες)
-				</label>
-				<ImageUploaderMulti
-					images={galleryImages}
-					onUpload={handleUploadGallery}
-					onRemoveImage={handleRemoveGalleryImage}
-					onRemoveAll={handleRemoveAllGallery}
-					onMoveImage={handleMoveGalleryImage}
-					uploaded
+			{/* Bottom action (mobile friendly) */}
+			<div className='lg:hidden sticky bottom-3 flex justify-end'>
+				<button
+					type='submit'
 					disabled={loading}
-				/>
+					className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition disabled:opacity-60'>
+					{loading && (
+						<LoadingSpinner
+							size={16}
+							color='border-white'
+							topColor='border-t-blue-600'
+							borderWidth={2}
+						/>
+					)}
+					{submitLabel}
+				</button>
 			</div>
-
-			<PricingBuilderSection
-				pricing={formData.pricing}
-				setPricing={(newPricing) =>
-					setFormData((prev) => ({
-						...prev,
-						pricing: newPricing,
-					}))
-				}
-			/>
-
-			<div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-				<LocationSection
-					location={formData.location}
-					setLocation={(loc) =>
-						setFormData((prev) => ({ ...prev, location: loc }))
-					}
-				/>
-			</div>
-
-			<div>
-				<label className='block font-medium mb-1'>Διαθεσιμότητα</label>
-				<ToggleSwitch
-					checked={formData.available}
-					onChange={(val) =>
-						setFormData((prev) => ({ ...prev, available: val }))
-					}
-					label='Διαθέσιμο'
-					enabledLabel='Ναι'
-					disabledLabel='Όχι'
-				/>
-			</div>
-
-			<button
-				type='submit'
-				disabled={loading}
-				className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition'>
-				{loading && (
-					<LoadingSpinner
-						size={16}
-						color='border-white'
-						topColor='border-t-blue-600'
-						borderWidth={2}
-					/>
-				)}
-				{submitLabel}
-			</button>
 		</form>
 	);
 }

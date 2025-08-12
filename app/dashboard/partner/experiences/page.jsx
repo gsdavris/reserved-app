@@ -21,7 +21,7 @@ export default async function PartnerDashboardExperiencesPage() {
 				<h1 className='text-2xl font-semibold'>Οι Εμπειρίες μου</h1>
 				<Link
 					href='/dashboard/partner/experiences/create'
-					className='inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition'>
+					className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition'>
 					<Plus size={18} />
 					Προσθήκη Εμπειρίας
 				</Link>

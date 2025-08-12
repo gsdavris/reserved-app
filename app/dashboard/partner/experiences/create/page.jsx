@@ -15,10 +15,10 @@ export default async function CreateExperiencePage() {
 
 	return (
 		<div>
-			<h1 className='text-2xl font-semibold mb-4'>Νέα Εμπειρία</h1>
 			<ExperienceForm
 				categories={categories}
 				submitLabel='Δημιουργία'
+				mode='create'
 			/>
 		</div>
 	);

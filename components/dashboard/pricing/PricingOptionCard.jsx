@@ -39,80 +39,102 @@ export default function PricingOptionCard({
 			onDragOver={onDragOver}
 			onDrop={onDrop}
 			onDragEnd={onDragEnd}
-			className={`border rounded p-4 space-y-4 bg-white shadow-sm transition-transform ${
-				isDragging ? 'cursor-grabbing ring-2 ring-blue-500 opacity-70' : ''
-			} ${isHover ? 'ring-2 ring-blue-300 translate-x-2' : ''}`}>
-			<div className='flex justify-between items-center gap-2'>
+			className={`border rounded p-4 space-y-4 bg-white shadow-sm transition-all
+        ${
+					isDragging
+						? 'cursor-grabbing ring-2 ring-blue-500 opacity-70'
+						: 'cursor-grab active:cursor-grabbing'
+				}
+        ${isHover ? 'ring-2 ring-blue-300 translate-x-2' : ''}`}>
+			{/* Title + Delete */}
+			<div className='flex flex-col sm:flex-row sm:items-center gap-2'>
 				<input
 					type='text'
 					value={option.label ?? ''}
 					onChange={(e) => handleChange('label', e.target.value)}
-					className='w-full border rounded px-3 py-2 text-sm'
+					className='min-w-0 w-full border rounded px-3 py-2 text-sm  focus:ring-2 focus:ring-blue-500 focus:outline-none'
 					placeholder='Όνομα Τιμής'
 				/>
-				<button
-					type='button'
-					onClick={onRemove}
-					title='Αφαίρεση επιλογής'
-					className='text-red-600 hover:text-red-800'>
-					<Trash2 className='w-4 h-4' />
-				</button>
+				<div className='flex justify-end'>
+					<button
+						type='button'
+						onClick={onRemove}
+						title='Αφαίρεση επιλογής'
+						aria-label='Αφαίρεση επιλογής'
+						className='text-red-600 hover:text-red-800 flex-shrink-0 inline-flex items-center justify-center h-9 w-9 border rounded'>
+						<Trash2 className='w-4 h-4' />
+					</button>
+				</div>
 			</div>
 
-			<div className='grid sm:grid-cols-2 gap-4'>
-				<div>
+			{/* Price + Duration */}
+			<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+				<div className='w-full'>
 					<label className='block text-sm font-medium mb-1'>Τιμή</label>
 					<input
 						type='number'
-						value={option.basePrice || ''}
+						step='0.01'
+						inputMode='decimal'
+						value={option.basePrice ?? ''}
 						onChange={(e) =>
-							handleChange('basePrice', parseFloat(e.target.value) || 0)
+							handleChange(
+								'basePrice',
+								e.target.value === '' ? '' : parseFloat(e.target.value) || 0
+							)
 						}
 						placeholder='Τιμή'
-						className='w-full border rounded px-3 py-2 h-10 text-sm'
+						className='w-full border rounded px-3 py-2 h-10 text-sm  focus:ring-2 focus:ring-blue-500 focus:outline-none'
 					/>
 				</div>
 
-				<div>
+				<div className='w-full'>
 					<label className='block text-sm font-medium mb-1'>Διάρκεια</label>
 					<DropdownSelect
 						label='Διάρκεια'
 						options={durationOptions}
 						value={option.durationUnit || 'hour'}
-						className='text-sm'
 						onChange={(val) => handleChange('durationUnit', val)}
+						className='w-full text-sm'
 					/>
 				</div>
 			</div>
 
-			<div className='grid sm:grid-cols-2 gap-4'>
-				<ToggleSwitch
-					label='Ανά άτομο'
-					checked={option.perPerson ?? false}
-					onChange={(v) => handleChange('perPerson', v)}
-				/>
+			{/* Toggles */}
+			<div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+				<div className='flex items-center justify-between sm:justify-start sm:gap-3'>
+					<ToggleSwitch
+						label='Ανά άτομο'
+						checked={option.perPerson ?? false}
+						onChange={(v) => handleChange('perPerson', v)}
+					/>
+				</div>
 
-				<ToggleSwitch
-					label='Ενεργή'
-					checked={option.isActive ?? true}
-					onChange={(v) => handleChange('isActive', v)}
-				/>
+				<div className='flex items-center justify-between sm:justify-start sm:gap-3'>
+					<ToggleSwitch
+						label='Ενεργή'
+						checked={option.isActive ?? true}
+						onChange={(v) => handleChange('isActive', v)}
+					/>
+				</div>
 			</div>
 
-			<DatePickerDynamic
-				mode='range'
-				value={{
-					from: option.availableFrom,
-					to: option.availableTo,
-				}}
-				onChange={({ from, to }) => {
-					updateOption({
-						...option,
-						availableFrom: from,
-						availableTo: to,
-					});
-				}}
-			/>
+			{/* Availability */}
+			<div className='w-full'>
+				<DatePickerDynamic
+					mode='range'
+					value={{
+						from: option.availableFrom || null,
+						to: option.availableTo || null,
+					}}
+					onChange={({ from, to }) => {
+						updateOption({
+							...option,
+							availableFrom: from || null,
+							availableTo: to || null,
+						});
+					}}
+				/>
+			</div>
 		</div>
 	);
 }

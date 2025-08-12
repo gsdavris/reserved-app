@@ -41,10 +41,71 @@ model Category {
 
   experiences     Experience[]
 
+  categoryTags CategoryTag[]
+
   imageGallery    ImageGallery?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model TagGroup {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0)
+
+  tags        Tag[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Tag {
+  id           Int          @id @default(autoincrement())
+  name         String
+  slug         String       @unique
+  description  String?
+  color        String?
+  icon         String?
+  isFilterable Boolean      @default(true)
+  sortOrder    Int          @default(0)
+
+  groupId      Int?
+  group        TagGroup?    @relation(fields: [groupId], references: [id])
+
+  experienceTags           ExperienceTag[]
+
+  recommendedInCategories  CategoryTag[]
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([groupId, sortOrder])
+}
+
+model ExperienceTag {
+  experience   Experience @relation(fields: [experienceId], references: [id])
+  experienceId Int
+
+  tag          Tag        @relation(fields: [tagId], references: [id])
+  tagId        Int
+
+  @@id([experienceId, tagId])
+  @@index([tagId])
+  @@index([experienceId])
+}
+
+model CategoryTag {
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+
+  tag        Tag      @relation(fields: [tagId], references: [id])
+  tagId      Int
+
+  @@id([categoryId, tagId])
+  @@index([tagId])
 }
 
 model Experience {
@@ -63,6 +124,7 @@ model Experience {
   categoryId   Int
   category     Category @relation(fields: [categoryId], references: [id])
 
+  experienceTags ExperienceTag[]
   bookings     Booking[]
 
   featuredImageId Int?

@@ -7,6 +7,7 @@ export default function EditExperienceClient({ initialData, categories }) {
 		<ExperienceForm
 			initialData={initialData}
 			categories={categories}
+			mode='edit'
 		/>
 	);
 }

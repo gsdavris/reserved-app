@@ -28,8 +28,7 @@ export default async function EditExperiencePage({ params }) {
 	const categories = await getCategoryOptions();
 
 	return (
-		<div className='p-4'>
-			<h1 className='text-2xl font-semibold mb-4'>Επεξεργασία Εμπειρίας</h1>
+		<div>
 			<EditExperienceClient
 				initialData={experience}
 				categories={categories}
