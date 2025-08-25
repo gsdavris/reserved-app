@@ -11,6 +11,8 @@ import ImageUploaderSingle from '@/components/ui/ImageUploaderSingle';
 import ImageUploaderMulti from '@/components/ui/ImageUploaderMulti';
 import PricingBuilderSection from '../pricing/PricingBuilderSection';
 import { validatePricingOption } from '@/lib/validators/pricing';
+import AddonsBuilderSection from '../addons/AddonsBuilderSection';
+import { validateAddonOption } from '@/lib/validators/addons';
 import LocationSection from '../location/LocationSection';
 import { Save } from 'lucide-react';
 import TagsSelect from '@/components/dashboard/partner/TagsSelect';
@@ -24,6 +26,7 @@ export default function ExperienceForm({
 	recommendedTagIds: initialRecommendedTagIds = [],
 }) {
 	const defaultPricing = { currency: 'EUR', options: [] };
+	const defaultAddons = { options: [] };
 
 	const [formData, setFormData] = useState({
 		title: initialData.title || '',
@@ -40,6 +43,11 @@ export default function ExperienceForm({
 			...defaultPricing,
 			...(initialData.pricing || {}),
 			options: initialData.pricing?.options || [],
+		},
+		addons: {
+			...defaultAddons,
+			...(initialData.addons || {}),
+			options: initialData.addons?.options || [],
 		},
 		tagIds: Array.isArray(initialData.tags)
 			? initialData.tags.map((t) => t.id)
@@ -209,10 +217,18 @@ export default function ExperienceForm({
 				return;
 			}
 
-			const allErrors =
-				formData.pricing.options?.flatMap((option, idx) =>
-					validatePricingOption(option).map((msg) => `#${idx + 1}: ${msg}`)
+			//  Addons + Pricing validation
+			const addonErrors =
+				formData.addons?.options?.flatMap((option, idx) =>
+					validateAddonOption(option).map((msg) => `Add‑on #${idx + 1}: ${msg}`)
 				) || [];
+			const pricingErrors =
+				formData.pricing.options?.flatMap((option, idx) =>
+					validatePricingOption(option).map((msg) => `Τιμή #${idx + 1}: ${msg}`)
+				) || [];
+
+			const allErrors = [...addonErrors, ...pricingErrors];
+
 			if (allErrors.length > 0) {
 				showNotification(allErrors.join('\n'), 'error');
 				setLoading(false);
@@ -261,6 +277,9 @@ export default function ExperienceForm({
 								availableTo,
 							})
 						),
+					},
+					addons: {
+						options: formData.addons.options || [],
 					},
 				}),
 			});
@@ -364,6 +383,18 @@ export default function ExperienceForm({
 							pricing={formData.pricing}
 							setPricing={(newPricing) =>
 								setFormData((prev) => ({ ...prev, pricing: newPricing }))
+							}
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='collapsible'
+						title='Add‑ons'
+						description='Προαιρετικές ή υποχρεωτικές έξτρα επιλογές ανά κράτηση/άτομο/χρόνο, με απόθεμα & παράθυρα διαθεσιμότητας.'>
+						<AddonsBuilderSection
+							addons={formData.addons}
+							setAddons={(newAddons) =>
+								setFormData((prev) => ({ ...prev, addons: newAddons }))
 							}
 						/>
 					</FormSection>
