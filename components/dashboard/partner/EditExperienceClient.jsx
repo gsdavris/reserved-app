@@ -2,12 +2,11 @@
 
 import ExperienceForm from './ExperienceForm';
 
-export default function EditExperienceClient({ initialData, categories }) {
+export default function EditExperienceClient(props) {
 	return (
 		<ExperienceForm
-			initialData={initialData}
-			categories={categories}
-			mode='edit'
+			{...props}
+			mode={props.mode ?? 'edit'}
 		/>
 	);
 }

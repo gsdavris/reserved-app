@@ -38,6 +38,8 @@ export default function CategorySelect({
 			value={value ?? ''}
 			onChange={onChange}
 			className={className}
+			searchable
+			searchPlaceholder='Αναζήτηση κατηγορίας...'
 		/>
 	);
 }

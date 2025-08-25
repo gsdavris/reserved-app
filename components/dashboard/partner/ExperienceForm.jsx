@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
@@ -13,12 +13,15 @@ import PricingBuilderSection from '../pricing/PricingBuilderSection';
 import { validatePricingOption } from '@/lib/validators/pricing';
 import LocationSection from '../location/LocationSection';
 import { Save } from 'lucide-react';
+import TagsSelect from '@/components/dashboard/partner/TagsSelect';
 
 export default function ExperienceForm({
 	initialData = {},
 	categories,
 	submitLabel = 'Αποθήκευση',
 	mode = 'edit', // 'create' or 'edit'
+	allTags = [],
+	recommendedTagIds: initialRecommendedTagIds = [],
 }) {
 	const defaultPricing = { currency: 'EUR', options: [] };
 
@@ -38,6 +41,9 @@ export default function ExperienceForm({
 			...(initialData.pricing || {}),
 			options: initialData.pricing?.options || [],
 		},
+		tagIds: Array.isArray(initialData.tags)
+			? initialData.tags.map((t) => t.id)
+			: [],
 	});
 
 	const [featuredImage, setFeaturedImage] = useState({
@@ -54,6 +60,38 @@ export default function ExperienceForm({
 	const [loading, setLoading] = useState(false);
 	const { showNotification } = useNotification();
 	const MAX_IMAGE_SIZE_MB = 5;
+
+	const [recommendedTagIds, setRecommendedTagIds] = useState(
+		Array.isArray(initialRecommendedTagIds) ? initialRecommendedTagIds : []
+	);
+
+	useEffect(() => {
+		const cid = Number(formData.categoryId);
+		if (!cid) {
+			setRecommendedTagIds([]);
+			return;
+		}
+		let cancelled = false;
+		(async () => {
+			try {
+				const res = await fetch(`/api/categories/${cid}/recommended-tags`);
+				if (!res.ok) {
+					if (!cancelled) setRecommendedTagIds([]);
+					return;
+				}
+				const data = await res.json();
+				if (!cancelled) {
+					const ids = Array.isArray(data) ? data.map((t) => t.id ?? t) : [];
+					setRecommendedTagIds(ids);
+				}
+			} catch {
+				if (!cancelled) setRecommendedTagIds([]);
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [formData.categoryId]);
 
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;
@@ -199,6 +237,7 @@ export default function ExperienceForm({
 					available: formData.available,
 					featuredImageId: featuredImage.id,
 					imageIds: galleryImages.map((img) => img.id),
+					tagIds: formData.tagIds,
 					pricing: {
 						currency: formData.pricing.currency,
 						options: formData.pricing.options.map(
@@ -297,13 +336,50 @@ export default function ExperienceForm({
 					<FormSection
 						variant='simple'
 						title='Περιγραφή'
-						description='Σύντομη και καθαρή περιγραφή της εμπειρίας.'>
+						description='Σύντομη και περιεκτική περιγραφή της εμπειρίας.'>
 						<textarea
 							name='description'
 							rows='6'
 							value={formData.description}
 							onChange={handleChange}
 							className='w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='collapsible'
+						title='Τοποθεσία'
+						description='Επίλεξε σημείο ή περιοχή στο χάρτη.'>
+						<LocationSection
+							location={formData.location}
+							setLocation={handleSetLocation}
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='collapsible'
+						title='Τιμολόγηση'
+						description='Διαχειρίσου πολλαπλές επιλογές τιμής, διάρκειας και διαθεσιμότητας, drag & drop για αλλαγή σειράς επιλογών.'>
+						<PricingBuilderSection
+							pricing={formData.pricing}
+							setPricing={(newPricing) =>
+								setFormData((prev) => ({ ...prev, pricing: newPricing }))
+							}
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='collapsible'
+						title='Image Gallery'
+						description='Από 2–10 εικόνες, drag & drop για αλλαγή σειράς εμφάνισης.'>
+						<ImageUploaderMulti
+							images={galleryImages}
+							onUpload={handleUploadGallery}
+							onRemoveImage={handleRemoveGalleryImage}
+							onRemoveAll={handleRemoveAllGallery}
+							onMoveImage={handleMoveGalleryImage}
+							uploaded
+							disabled={loading}
 						/>
 					</FormSection>
 				</div>
@@ -337,6 +413,20 @@ export default function ExperienceForm({
 
 					<FormSection
 						variant='simple'
+						title='Tags'>
+						<TagsSelect
+							tags={allTags}
+							recommendedTagIds={recommendedTagIds}
+							value={formData.tagIds}
+							onChange={(ids) =>
+								setFormData((prev) => ({ ...prev, tagIds: ids }))
+							}
+							className='w-full'
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='simple'
 						title='Διαθεσιμότητα'>
 						<ToggleSwitch
 							checked={formData.available}
@@ -349,68 +439,23 @@ export default function ExperienceForm({
 						/>
 					</FormSection>
 				</aside>
-
-				{/* FULL-WIDTH, COMPLEX SECTIONS */}
-				<div className='col-span-12'>
-					<FormSection
-						variant='collapsible'
-						title='Τιμολόγηση'
-						description='Διαχειρίσου πολλαπλές επιλογές τιμής, διάρκειας και διαθεσιμότητας.'
-						defaultOpen>
-						<PricingBuilderSection
-							pricing={formData.pricing}
-							setPricing={(newPricing) =>
-								setFormData((prev) => ({ ...prev, pricing: newPricing }))
-							}
-						/>
-					</FormSection>
-				</div>
-
-				<div className='col-span-12'>
-					<FormSection
-						variant='collapsible'
-						title='Τοποθεσία'
-						description='Επίλεξε σημείο ή περιοχή στο χάρτη.'
-						defaultOpen>
-						<LocationSection
-							location={formData.location}
-							setLocation={handleSetLocation}
-						/>
-					</FormSection>
-				</div>
-
-				<div className='col-span-12'>
-					<FormSection
-						variant='collapsible'
-						title='Image Gallery (2–10 εικόνες)'
-						description='Σύρε-άφησε για αλλαγή σειράς.'
-						defaultOpen>
-						<ImageUploaderMulti
-							images={galleryImages}
-							onUpload={handleUploadGallery}
-							onRemoveImage={handleRemoveGalleryImage}
-							onRemoveAll={handleRemoveAllGallery}
-							onMoveImage={handleMoveGalleryImage}
-							uploaded
-							disabled={loading}
-						/>
-					</FormSection>
-				</div>
 			</div>
 
 			{/* Bottom action (mobile friendly) */}
-			<div className='lg:hidden sticky bottom-3 flex justify-end'>
+			<div className='lg:hidden flex'>
 				<button
 					type='submit'
 					disabled={loading}
-					className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition disabled:opacity-60'>
-					{loading && (
+					className='cursor-pointer inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-60'>
+					{loading ? (
 						<LoadingSpinner
 							size={16}
 							color='border-white'
 							topColor='border-t-blue-600'
 							borderWidth={2}
 						/>
+					) : (
+						<Save size={18} />
 					)}
 					{submitLabel}
 				</button>

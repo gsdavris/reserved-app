@@ -133,6 +133,7 @@ model Experience {
   imageGallery    ImageGallery?
 
   pricing      ExperiencePricing? 
+  addons   ExperienceAddons? 
 }
 
 model Booking {
@@ -238,4 +239,27 @@ model Location {
 enum LocationType {
   point
   region
+}
+
+enum AddonPricingMode {
+  per_booking   
+  per_person    
+  per_unit_time 
+}
+
+enum AddonInventoryMode {
+  unlimited   
+  limited    
+  // shared_resource // μελλοντική χρήση με Resource engine
+}
+
+model ExperienceAddons {
+  id           Int         @id @default(autoincrement())
+  experience   Experience  @relation(fields: [experienceId], references: [id])
+  experienceId Int         @unique
+  
+  options      Json
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }

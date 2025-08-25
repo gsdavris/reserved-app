@@ -100,7 +100,7 @@ export default function PricingOptionCard({
 			</div>
 
 			{/* Toggles */}
-			<div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+			<div className='grid gap-3'>
 				<div className='flex items-center justify-between sm:justify-start sm:gap-3'>
 					<ToggleSwitch
 						label='Ανά άτομο'

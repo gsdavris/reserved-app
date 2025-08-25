@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import Image from 'next/image';
 import EditButton from './EditButton';
 import ClientDeleteButton from './ClientDeleteButton';
+import ChipsRow from '@/components/ui/ChipsRow';
 
 export default function ExperienceCard({ experience, onDelete, index }) {
 	const image = experience.featuredImage;
@@ -16,18 +18,18 @@ export default function ExperienceCard({ experience, onDelete, index }) {
 
 	const activeOptions = options.filter((opt) => opt?.isActive);
 
+	// NEW: resolve tags (flat ή nested fallback)
+	const tags = useMemo(() => {
+		if (Array.isArray(experience.tags)) return experience.tags;
+		if (Array.isArray(experience.experienceTags)) {
+			return experience.experienceTags.map((et) => et?.tag).filter(Boolean);
+		}
+		return [];
+	}, [experience]);
+
 	const formatOption = (opt) => {
 		const suffix = opt.perPerson ? ' / άτομο' : '';
-		const unitMap = {
-			day: 'ημέρα',
-			hour: 'ώρα',
-			half_day: 'μισή μέρα',
-			event: 'εκδήλωση',
-			custom: 'μονάδα',
-		};
-		return `από ${opt.basePrice}€ / ${
-			unitMap[opt.durationUnit] ?? opt.durationUnit
-		}${suffix}`;
+		return `${opt.label}, από ${opt.basePrice}€ ${suffix}`;
 	};
 
 	return (
@@ -76,6 +78,26 @@ export default function ExperienceCard({ experience, onDelete, index }) {
 					<p className='text-sm text-gray-300 mt-1 italic'>
 						Δεν έχουν οριστεί τιμές
 					</p>
+				)}
+
+				{/* NEW: Tags chips */}
+
+				{tags.length > 0 && (
+					<ChipsRow
+						className='mt-2'
+						items={tags.slice(0, 4).map((t) => ({
+							id: t.id,
+							label: t.name,
+							color: t.color,
+						}))}
+						variant='outline'
+						size='xs'
+					/>
+				)}
+				{tags.length > 4 && (
+					<span className='text-xs text-gray-400'>
+						+{tags.length - 4} ακόμα
+					</span>
 				)}
 			</div>
 

@@ -11,7 +11,7 @@ export default function FormSection({
 	variant = 'simple', // 'simple' | 'collapsible'
 	title,
 	description,
-	defaultOpen = true,
+	defaultOpen = false,
 	className = '',
 	headerRight = null, // right-side area in header (e.g., counters, actions)
 	children,

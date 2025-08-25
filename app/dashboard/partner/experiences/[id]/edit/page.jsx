@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getExperienceById } from '@/lib/handlers/experienceHandlers';
 import { getCategoryOptions } from '@/lib/handlers/categoryHandlers';
+import {
+	getTags,
+	getRecommendedTagsForCategory,
+} from '@/lib/handlers/tagHandlers';
 import EditExperienceClient from '@/components/dashboard/partner/EditExperienceClient';
 
 export default async function EditExperiencePage({ params }) {
@@ -26,12 +30,20 @@ export default async function EditExperiencePage({ params }) {
 	}
 
 	const categories = await getCategoryOptions();
+	const allTags = await getTags();
+	const recommended = experience?.categoryId
+		? await getRecommendedTagsForCategory(experience.categoryId)
+		: [];
+	const recommendedTagIds = recommended.map((t) => t.id);
 
 	return (
 		<div>
 			<EditExperienceClient
 				initialData={experience}
 				categories={categories}
+				allTags={allTags}
+				recommendedTagIds={recommendedTagIds}
+				submitLabel='Αποθήκευση'
 			/>
 		</div>
 	);

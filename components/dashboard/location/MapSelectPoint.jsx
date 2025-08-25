@@ -77,7 +77,7 @@ export default function MapSelectPoint({
 	}, [mapInstance, pendingCoords]);
 
 	return (
-		<div className='w-full max-w-3xl border rounded overflow-hidden'>
+		<div className='w-full border rounded overflow-hidden'>
 			<p className='text-sm text-gray-600 px-3 pt-2 flex items-center gap-2'>
 				<Move3D className='w-4 h-4 text-gray-500' />
 				Μετακινήστε τον χάρτη, κάντε click για να επιλέξετε σημείο.

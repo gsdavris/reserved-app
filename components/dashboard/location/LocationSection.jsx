@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 const MapSelectPoint = dynamic(() => import('./MapSelectPoint'), {
 	ssr: false,
 	loading: () => (
-		<div className='w-full max-w-3xl h-[400px] border rounded flex items-center justify-center bg-gray-50'>
+		<div className='w-full h-[400px] border rounded flex items-center justify-center bg-gray-50'>
 			Φόρτωση χάρτη...
 		</div>
 	),
@@ -15,7 +15,7 @@ const MapSelectPoint = dynamic(() => import('./MapSelectPoint'), {
 const MapSelectRegion = dynamic(() => import('./MapSelectRegion'), {
 	ssr: false,
 	loading: () => (
-		<div className='w-full max-w-3xl h-[400px] border rounded flex items-center justify-center bg-gray-50'>
+		<div className='w-full h-[400px] border rounded flex items-center justify-center bg-gray-50'>
 			Φόρτωση χάρτη...
 		</div>
 	),
