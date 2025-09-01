@@ -17,6 +17,99 @@ import LocationSection from '../location/LocationSection';
 import { Save } from 'lucide-react';
 import TagsSelect from '@/components/dashboard/partner/TagsSelect';
 
+import {
+	formatEUR,
+	normalizePricingOptions,
+	normalizeAddons,
+	summarizePricing,
+	summarizeAddons,
+	summarizeLocation,
+	summarizeGallery,
+} from '@/lib/utils/experiences';
+
+function LocationHeaderRight(loc) {
+	const { label } = summarizeLocation(loc);
+
+	return (
+		<div className='text-xs sm:text-sm text-gray-600 text-right break-words min-w-0'>
+			{label}
+		</div>
+	);
+}
+
+function PricingHeaderRight(pricing) {
+	const { count, activeCount, minPrice } = summarizePricing(pricing);
+	if (!count)
+		return (
+			<span className='text-xs sm:text-sm text-gray-500'>Καμία επιλογή</span>
+		);
+
+	return (
+		<div className='flex flex-wrap justify-end gap-1 max-w-[280px]'>
+			<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+				{count} επιλογές
+			</span>
+			{activeCount !== count && (
+				<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+					{activeCount} ενεργές
+				</span>
+			)}
+			{minPrice != null && (
+				<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+					από {formatEUR(minPrice)}
+				</span>
+			)}
+		</div>
+	);
+}
+
+function AddonsHeaderRight(addons) {
+	const { count, required, paid } = summarizeAddons(addons);
+	if (!count)
+		return (
+			<span className='text-xs sm:text-sm text-gray-500'>Κανένα add-on</span>
+		);
+
+	return (
+		<div className='flex flex-wrap justify-end gap-1 max-w-[280px]'>
+			<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+				{count} add-ons
+			</span>
+			{required > 0 && (
+				<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+					{required} υποχρεωτικό/ά
+				</span>
+			)}
+			{paid > 0 && (
+				<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+					{paid} με χρέωση
+				</span>
+			)}
+		</div>
+	);
+}
+
+function GalleryHeaderRight(images) {
+	const { count, valid, maxExceeded } = summarizeGallery(images);
+	const invalidMsg = maxExceeded
+		? 'Πάνω από 10'
+		: count === 1
+		? 'Χρειάζονται 2'
+		: null;
+	return (
+		<div className='flex flex-wrap justify-end gap-1 max-w-[280px]'>
+			<span className='px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs'>
+				{count || 0} εικόνες
+			</span>
+			{!valid && (
+				<span className='px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs'>
+					{invalidMsg}
+				</span>
+			)}
+		</div>
+	);
+}
+
 export default function ExperienceForm({
 	initialData = {},
 	categories,
@@ -25,8 +118,17 @@ export default function ExperienceForm({
 	allTags = [],
 	recommendedTagIds: initialRecommendedTagIds = [],
 }) {
-	const defaultPricing = { currency: 'EUR', options: [] };
+	const defaultPricing = { options: [] };
 	const defaultAddons = { options: [] };
+
+	const normalizePricingOption = (opt = {}) => {
+		if (Array.isArray(opt.availabilityWindows)) return opt;
+		const from = opt.availableFrom || null;
+		const to = opt.availableTo || null;
+		const win = from || to ? [{ from: from || to, to: to || from }] : [];
+		const { availableFrom, availableTo, ...rest } = opt;
+		return { ...rest, availabilityWindows: win };
+	};
 
 	const [formData, setFormData] = useState({
 		title: initialData.title || '',
@@ -42,12 +144,10 @@ export default function ExperienceForm({
 		pricing: {
 			...defaultPricing,
 			...(initialData.pricing || {}),
-			options: initialData.pricing?.options || [],
+			options: normalizePricingOptions(initialData.pricing?.options || []),
 		},
 		addons: {
-			...defaultAddons,
-			...(initialData.addons || {}),
-			options: initialData.addons?.options || [],
+			...normalizeAddons(initialData.addons),
 		},
 		tagIds: Array.isArray(initialData.tags)
 			? initialData.tags.map((t) => t.id)
@@ -255,30 +355,11 @@ export default function ExperienceForm({
 					imageIds: galleryImages.map((img) => img.id),
 					tagIds: formData.tagIds,
 					pricing: {
-						currency: formData.pricing.currency,
-						options: formData.pricing.options.map(
-							({
-								id,
-								label,
-								basePrice,
-								durationUnit,
-								perPerson,
-								isActive,
-								availableFrom,
-								availableTo,
-							}) => ({
-								id,
-								label,
-								basePrice,
-								durationUnit,
-								perPerson,
-								isActive,
-								availableFrom,
-								availableTo,
-							})
-						),
+						...formData.pricing,
+						options: formData.pricing.options || [],
 					},
 					addons: {
+						...formData.addons,
 						options: formData.addons.options || [],
 					},
 				}),
@@ -368,7 +449,8 @@ export default function ExperienceForm({
 					<FormSection
 						variant='collapsible'
 						title='Τοποθεσία'
-						description='Επίλεξε σημείο ή περιοχή στο χάρτη.'>
+						description='Επίλεξε σημείο ή περιοχή στο χάρτη.'
+						headerRight={LocationHeaderRight(formData.location)}>
 						<LocationSection
 							location={formData.location}
 							setLocation={handleSetLocation}
@@ -378,7 +460,8 @@ export default function ExperienceForm({
 					<FormSection
 						variant='collapsible'
 						title='Τιμολόγηση'
-						description='Διαχειρίσου πολλαπλές επιλογές τιμής, διάρκειας και διαθεσιμότητας, drag & drop για αλλαγή σειράς επιλογών.'>
+						description='Διαχειρίσου πολλαπλές επιλογές τιμής, διάρκειας και διαθεσιμότητας, drag & drop για αλλαγή σειράς επιλογών.'
+						headerRight={PricingHeaderRight(formData.pricing)}>
 						<PricingBuilderSection
 							pricing={formData.pricing}
 							setPricing={(newPricing) =>
@@ -390,7 +473,8 @@ export default function ExperienceForm({
 					<FormSection
 						variant='collapsible'
 						title='Add‑ons'
-						description='Προαιρετικές ή υποχρεωτικές έξτρα επιλογές ανά κράτηση/άτομο/χρόνο, με απόθεμα & παράθυρα διαθεσιμότητας.'>
+						description='Προαιρετικές ή υποχρεωτικές έξτρα επιλογές ανά κράτηση/άτομο/χρόνο, με απόθεμα & παράθυρα διαθεσιμότητας.'
+						headerRight={AddonsHeaderRight(formData.addons)}>
 						<AddonsBuilderSection
 							addons={formData.addons}
 							setAddons={(newAddons) =>
@@ -402,7 +486,8 @@ export default function ExperienceForm({
 					<FormSection
 						variant='collapsible'
 						title='Image Gallery'
-						description='Από 2–10 εικόνες, drag & drop για αλλαγή σειράς εμφάνισης.'>
+						description='Από 2–10 εικόνες, drag & drop για αλλαγή σειράς εμφάνισης.'
+						headerRight={GalleryHeaderRight(galleryImages)}>
 						<ImageUploaderMulti
 							images={galleryImages}
 							onUpload={handleUploadGallery}

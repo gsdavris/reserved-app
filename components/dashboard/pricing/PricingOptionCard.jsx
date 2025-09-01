@@ -5,6 +5,9 @@ import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import DropdownSelect from '@/components/ui/DropdownSelect';
 import DatePickerDynamic from '@/components/ui/DatePickerDynamic';
 
+import ChipsRow from '@/components/ui/ChipsRow';
+import { format } from 'date-fns';
+
 const durationOptions = [
 	{ label: 'Ανά Ώρα', value: 'hour' },
 	{ label: 'Μισή Ημέρα', value: 'half_day' },
@@ -12,6 +15,14 @@ const durationOptions = [
 	{ label: 'Εκδήλωση', value: 'event' },
 	{ label: 'Custom', value: 'custom' },
 ];
+
+const toDate = (val) =>
+	val instanceof Date ? val : val ? new Date(val) : null;
+const toISODate = (d) => {
+	if (!d) return null;
+	const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+	return utc.toISOString().slice(0, 10); // YYYY-MM-DD
+};
 
 export default function PricingOptionCard({
 	option,
@@ -30,6 +41,17 @@ export default function PricingOptionCard({
 
 	const handleChange = (key, value) => {
 		updateOption({ ...option, [key]: value });
+	};
+
+	const setWindows = (windows) => {
+		updateOption({ ...option, availabilityWindows: windows });
+	};
+
+	const removeRangeAt = (i) => {
+		const next = (option.availabilityWindows || []).filter(
+			(_, idx) => idx !== i
+		);
+		setWindows(next);
 	};
 
 	return (
@@ -118,22 +140,38 @@ export default function PricingOptionCard({
 				</div>
 			</div>
 
-			{/* Availability */}
+			{/* Availability (multi-range) */}
 			<div className='w-full'>
 				<DatePickerDynamic
-					mode='range'
-					value={{
-						from: option.availableFrom || null,
-						to: option.availableTo || null,
-					}}
-					onChange={({ from, to }) => {
-						updateOption({
-							...option,
-							availableFrom: from || null,
-							availableTo: to || null,
-						});
+					mode='multi-range'
+					value={(option.availabilityWindows || []).map((w) => ({
+						from: toDate(w.from),
+						to: toDate(w.to),
+					}))}
+					onChange={(ranges) => {
+						const windows = (ranges || []).map((r) => ({
+							from: toISODate(r?.from),
+							to: toISODate(r?.to),
+						}));
+						setWindows(windows);
 					}}
 				/>
+
+				{(option.availabilityWindows || []).length > 0 && (
+					<div className='mt-2'>
+						<ChipsRow
+							items={(option.availabilityWindows || []).map((w, i) => ({
+								id: i,
+								label: `${
+									w.from ? format(toDate(w.from), 'dd/MM/yyyy') : '—'
+								} – ${w.to ? format(toDate(w.to), 'dd/MM/yyyy') : '—'}`,
+							}))}
+							onRemove={(item) => removeRangeAt(item.id)}
+							variant='outline'
+							size='xs'
+						/>
+					</div>
+				)}
 			</div>
 		</div>
 	);

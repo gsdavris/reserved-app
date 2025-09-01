@@ -17,7 +17,7 @@ export default function ToggleSwitch({
 				onChange={onChange}
 				className={`${
 					checked ? 'bg-blue-600' : 'bg-gray-300'
-				} relative inline-flex h-6 w-11 items-center rounded-full transition duration-200`}>
+				} relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition duration-200`}>
 				<span
 					className={`${
 						checked ? 'translate-x-6' : 'translate-x-1'
@@ -25,7 +25,7 @@ export default function ToggleSwitch({
 				/>
 			</Switch>
 			{label && (
-				<span className='text-sm'>
+				<span className='text-sm break-words min-w-0'>
 					{label}:{' '}
 					<span className='font-medium'>
 						{checked ? enabledLabel : disabledLabel}

@@ -40,6 +40,7 @@ export default function GalleryImageCard({
 				fill
 				sizes='128px'
 				className='object-cover'
+				unoptimized
 			/>
 			{uploaded && (
 				<div className='absolute top-1 left-1 bg-green-600 text-white p-1 rounded-full shadow-md'>
