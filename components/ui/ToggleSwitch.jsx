@@ -3,17 +3,19 @@
 import { Switch } from '@headlessui/react';
 
 export default function ToggleSwitch({
-	checked,
-	onChange,
+	checked = false,
+	onChange = () => {},
 	label = '',
 	className = '',
 	enabledLabel = 'Ενεργό',
 	disabledLabel = 'Ανενεργό',
 }) {
+	const isOn = Boolean(checked);
+
 	return (
 		<div className={`flex items-center gap-3 ${className}`}>
 			<Switch
-				checked={checked}
+				checked={isOn}
 				onChange={onChange}
 				className={`${
 					checked ? 'bg-blue-600' : 'bg-gray-300'

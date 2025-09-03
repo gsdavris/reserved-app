@@ -3,11 +3,17 @@ import Image from 'next/image';
 import EditButton from './EditButton';
 import ClientDeleteButton from './ClientDeleteButton';
 import ChipsRow from '@/components/ui/ChipsRow';
+import StatusPill from '@/components/ui/StatusPill';
 
 export default function ExperienceCard({ experience, onDelete, index }) {
 	const image = experience.featuredImage;
 	const category = experience.category?.name;
 	const parentCategory = experience.category?.parent?.name;
+
+	const isPublished =
+		typeof experience.isPublished === 'boolean'
+			? experience.isPublished
+			: !!experience.available;
 
 	const fullCategoryLabel = parentCategory
 		? `${parentCategory} / ${category}`
@@ -50,7 +56,12 @@ export default function ExperienceCard({ experience, onDelete, index }) {
 
 			{/* Content */}
 			<div className='flex-1 space-y-1'>
-				<h2 className='font-semibold'>{experience.title}</h2>
+				<div className='flex flex-wrap items-center gap-1'>
+					<h2 className='font-semibold'>{experience.title}</h2>
+					<div className='basis-full lg:basis-auto lg:ml-2'>
+						<StatusPill isPublished={isPublished} />
+					</div>
+				</div>
 				{location && <p className='text-sm text-gray-500'>{location}</p>}
 				{fullCategoryLabel && (
 					<p className='text-sm text-gray-400 italic'>{fullCategoryLabel}</p>

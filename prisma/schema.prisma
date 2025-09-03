@@ -24,63 +24,100 @@ model User {
   bookings    Booking[]
   experiences Experience[] @relation("BusinessExperiences")
   images      Image[]      @relation("UserImages")
+
+  providers Provider[] @relation("BusinessProviders")
+}
+
+model Provider {
+  id         Int  @id @default(autoincrement())
+  business   User @relation("BusinessProviders", fields: [businessId], references: [id], onDelete: Cascade)
+  businessId Int
+
+  name  String
+  email String?
+  phone String?
+  meta  Json? // skills, notes, χρώμα στο calendar, κλπ.
+
+  experiences  ExperienceProvider[] // M:N με Experience
+  bookingItems BookingItem[]        @relation("ProviderBookingItems")
+  holds        InventoryHold[]      @relation("ProviderHolds")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId])
+}
+
+model ExperienceProvider {
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId Int
+
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerId Int
+
+  // προαιρετικό: ρόλος, skill, priority, capacity JSON
+  role String?
+  meta Json?
+
+  @@id([experienceId, providerId])
+  @@index([providerId])
 }
 
 model Category {
-  id           Int      @id @default(autoincrement())
-  name         String
-  slug         String   @unique
-  description  String?
+  id          Int     @id @default(autoincrement())
+  name        String
+  slug        String  @unique
+  description String?
 
-  parentId    Int?
-  parent      Category? @relation("Subcategories", fields: [parentId], references: [id])
-  children    Category[] @relation("Subcategories")
+  parentId Int?
+  parent   Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  children Category[] @relation("Subcategories")
 
   featuredImageId Int?
-  featuredImage   Image?    @relation("CategoryFeaturedImage", fields: [featuredImageId], references: [id])
+  featuredImage   Image? @relation("CategoryFeaturedImage", fields: [featuredImageId], references: [id])
 
-  experiences     Experience[]
+  experiences Experience[]
 
   categoryTags CategoryTag[]
 
-  imageGallery    ImageGallery?
+  imageGallery ImageGallery?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model TagGroup {
-  id          Int       @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  slug        String    @unique
+  slug        String  @unique
   description String?
-  sortOrder   Int       @default(0)
+  sortOrder   Int     @default(0)
 
-  tags        Tag[]
+  tags Tag[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Tag {
-  id           Int          @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   name         String
-  slug         String       @unique
+  slug         String  @unique
   description  String?
   color        String?
   icon         String?
-  isFilterable Boolean      @default(true)
-  sortOrder    Int          @default(0)
+  isFilterable Boolean @default(true)
+  sortOrder    Int     @default(0)
 
-  groupId      Int?
-  group        TagGroup?    @relation(fields: [groupId], references: [id])
+  groupId Int?
+  group   TagGroup? @relation(fields: [groupId], references: [id])
 
-  experienceTags           ExperienceTag[]
+  experienceTags ExperienceTag[]
 
-  recommendedInCategories  CategoryTag[]
+  recommendedInCategories CategoryTag[]
 
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([groupId, sortOrder])
 }
@@ -89,8 +126,8 @@ model ExperienceTag {
   experience   Experience @relation(fields: [experienceId], references: [id])
   experienceId Int
 
-  tag          Tag        @relation(fields: [tagId], references: [id])
-  tagId        Int
+  tag   Tag @relation(fields: [tagId], references: [id])
+  tagId Int
 
   @@id([experienceId, tagId])
   @@index([tagId])
@@ -101,39 +138,48 @@ model CategoryTag {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId Int
 
-  tag        Tag      @relation(fields: [tagId], references: [id])
-  tagId      Int
+  tag   Tag @relation(fields: [tagId], references: [id])
+  tagId Int
 
   @@id([categoryId, tagId])
   @@index([tagId])
 }
 
 model Experience {
-  id           Int      @id @default(autoincrement())
-  title        String
-  slug         String   @unique
-  description  String
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  description String
   locationId  Int?
   location    Location? @relation(fields: [locationId], references: [id])
-  available    Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  
+  isPublished Boolean @default(true)
 
-  businessId   Int
-  business     User     @relation("BusinessExperiences", fields: [businessId], references: [id])
+  createdAt DateTime @default(now())
 
-  categoryId   Int
-  category     Category @relation(fields: [categoryId], references: [id])
+  businessId Int
+  business   User @relation("BusinessExperiences", fields: [businessId], references: [id])
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
 
   experienceTags ExperienceTag[]
-  bookings     Booking[]
+  bookings       Booking[]
 
   featuredImageId Int?
-  featuredImage   Image?  @relation("ExperienceFeaturedImage", fields: [featuredImageId], references: [id])
+  featuredImage   Image? @relation("ExperienceFeaturedImage", fields: [featuredImageId], references: [id])
 
-  imageGallery    ImageGallery?
+  imageGallery ImageGallery?
 
-  pricing      ExperiencePricing? 
-  addons   ExperienceAddons? 
+  pricing ExperiencePricing?
+  addons  ExperienceAddons?
+
+  availability        ExperienceAvailability?
+  units               ExperienceUnit[]
+  experienceProviders ExperienceProvider[]
+
+  inventoryHolds InventoryHold[] @relation("ExperienceInventoryHolds")
+  bookingItems   BookingItem[]   @relation("ExperienceBookingItems")
 }
 
 model Booking {
@@ -147,22 +193,26 @@ model Booking {
 
   experienceId Int
   experience   Experience @relation(fields: [experienceId], references: [id])
+
+  items BookingItem[]
+
+  @@index([experienceId, date])
 }
 
 model Image {
-  id            Int           @id @default(autoincrement())
-  url           String
-  alt           String?
-  caption       String?
-  fileName      String?
-  mimeType      String?
-  fileSizeKb    Int?
-  width         Int?
-  height        Int?
-  createdAt     DateTime      @default(now())
+  id         Int      @id @default(autoincrement())
+  url        String
+  alt        String?
+  caption    String?
+  fileName   String?
+  mimeType   String?
+  fileSizeKb Int?
+  width      Int?
+  height     Int?
+  createdAt  DateTime @default(now())
 
-  uploadedById  Int?
-  uploadedBy    User?         @relation("UserImages", fields: [uploadedById], references: [id])
+  uploadedById Int?
+  uploadedBy   User? @relation("UserImages", fields: [uploadedById], references: [id])
 
   featuredInExperiences Experience[] @relation("ExperienceFeaturedImage")
   featuredInCategories  Category[]   @relation("CategoryFeaturedImage")
@@ -171,45 +221,43 @@ model Image {
 }
 
 model GalleryImage {
-  id            Int         @id @default(autoincrement())
-  order         Int        
+  id    Int @id @default(autoincrement())
+  order Int
 
-  imageGallery  ImageGallery @relation(fields: [imageGalleryId], references: [id])
+  imageGallery   ImageGallery @relation(fields: [imageGalleryId], references: [id])
   imageGalleryId Int
 
-  image         Image       @relation(fields: [imageId], references: [id])
-  imageId       Int
+  image   Image @relation(fields: [imageId], references: [id])
+  imageId Int
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([imageGalleryId, imageId])
 }
 
 model ImageGallery {
-  id            Int           @id @default(autoincrement())
-  experience     Experience?   @relation(fields: [experienceId], references: [id])
-  experienceId   Int?          @unique
+  id           Int         @id @default(autoincrement())
+  experience   Experience? @relation(fields: [experienceId], references: [id])
+  experienceId Int?        @unique
 
-  category       Category?     @relation(fields: [categoryId], references: [id])
-  categoryId     Int?          @unique
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?      @unique
 
-  galleryImages  GalleryImage[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  galleryImages GalleryImage[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
-
-
 model ExperiencePricing {
-  id           Int         @id @default(autoincrement())
-  experience   Experience  @relation(fields: [experienceId], references: [id])
-  experienceId Int         @unique
+  id           Int        @id @default(autoincrement())
+  experience   Experience @relation(fields: [experienceId], references: [id])
+  experienceId Int        @unique
 
-  currency     String      @default("EUR")
-  options      Json        
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  currency  String   @default("EUR")
+  options   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum DurationUnit {
@@ -224,14 +272,14 @@ model Location {
   id          Int          @id @default(autoincrement())
   name        String
   type        LocationType
-  coordinates Json?        //  { lat, lng }
-  boundingBox Json?        //  { sw: { lat, lng }, ne: { lat, lng } }
+  coordinates Json? //  { lat, lng }
+  boundingBox Json? //  { sw: { lat, lng }, ne: { lat, lng } }
   placeId     String?
   country     String?
   locality    String?
   adminArea   String?
 
-  experiences Experience[] 
+  experiences Experience[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -242,24 +290,130 @@ enum LocationType {
 }
 
 enum AddonPricingMode {
-  per_booking   
-  per_person    
-  per_unit_time 
+  per_booking
+  per_person
+  per_unit_time
 }
 
 enum AddonInventoryMode {
-  unlimited   
-  limited    
+  unlimited
+  limited
   // shared_resource // μελλοντική χρήση με Resource engine
 }
 
 model ExperienceAddons {
-  id           Int         @id @default(autoincrement())
-  experience   Experience  @relation(fields: [experienceId], references: [id])
-  experienceId Int         @unique
-  
-  options      Json
+  id           Int        @id @default(autoincrement())
+  experience   Experience @relation(fields: [experienceId], references: [id])
+  experienceId Int        @unique
 
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  options Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AvailabilityType {
+  COUNT // χωρητικότητα ανά slot 
+  UNIT // συγκεκριμένες μονάδες/spots
+  APPOINTMENT // ραντεβού με providers 
+}
+
+model ExperienceAvailability {
+  id           Int        @id @default(autoincrement())
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId Int        @unique
+
+  type     AvailabilityType
+  timezone String           @default("Europe/Athens")
+
+  rules      Json // [{ rrule, startTime?, endTime?, date? }, ...]
+  openHours  Json? // [{ dow: 0..6, start:'HH:mm', end:'HH:mm' }, ...]
+  exceptions Json? // [{ date:'YYYY-MM-DD' }] ή ranges
+
+  slot          Json? // { strategy:'FIXED'|'FLEX', durationMin, intervalMin, bufferBeforeMin?, bufferAfterMin? }
+  capacity      Json? // COUNT: { perSlot: Int }
+  bookingWindow Json? // { minLeadMinutes?, maxAdvanceDays? }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExperienceUnit {
+  id           Int        @id @default(autoincrement())
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId Int
+
+  label    String
+  zone     String?
+  position Json? // { row, col } ή { x, y }
+  capacity Int     @default(1)
+  active   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  holds        InventoryHold[] @relation("UnitHolds")
+  bookingItems BookingItem[]   @relation("UnitBookingItems")
+
+  @@index([experienceId, active])
+  @@index([experienceId, zone])
+}
+
+model InventoryHold {
+  id Int @id @default(autoincrement())
+
+  experience   Experience @relation("ExperienceInventoryHolds", fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId Int
+
+  unit   ExperienceUnit? @relation("UnitHolds", fields: [unitId], references: [id], onDelete: SetNull)
+  unitId Int?
+
+  provider   Provider? @relation("ProviderHolds", fields: [providerId], references: [id], onDelete: SetNull)
+  providerId Int?
+
+  optionId String? // pricing.options[].id (snapshot ref)
+  quantity Int     @default(1) // για COUNT-based slots
+
+  from      DateTime
+  to        DateTime
+  expiresAt DateTime // TTL
+
+  createdAt DateTime @default(now())
+
+  @@index([experienceId, from, to])
+  @@index([unitId, from, to])
+  @@index([providerId, from, to])
+}
+
+model BookingItem {
+  id Int @id @default(autoincrement())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId Int
+
+  experience   Experience @relation("ExperienceBookingItems", fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId Int
+
+  unit   ExperienceUnit? @relation("UnitBookingItems", fields: [unitId], references: [id], onDelete: SetNull)
+  unitId Int?
+
+  provider   Provider? @relation("ProviderBookingItems", fields: [providerId], references: [id], onDelete: SetNull)
+  providerId Int?
+
+  optionId String? // pricing.options[].id (snapshot ref)
+  quantity Int      @default(1) // COUNT-based
+  from     DateTime
+  to       DateTime
+
+  // snapshot τιμολόγησης (optional αλλά χρήσιμο)
+  currency   String? // π.χ. 'EUR'
+  priceCents Int? // συνολικό ποσό γραμμής ή unit price
+  meta       Json? // φόροι/εκπτώσεις/notes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([experienceId, from, to])
+  @@index([unitId, from, to])
+  @@index([providerId, from, to])
 }

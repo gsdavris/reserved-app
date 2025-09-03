@@ -140,7 +140,7 @@ export default function ExperienceForm({
 			boundingBox: null,
 		},
 		categoryId: initialData.category?.id || '',
-		available: initialData.available ?? true,
+		isPublished: initialData.isPublished ?? initialData.available ?? true,
 		pricing: {
 			...defaultPricing,
 			...(initialData.pricing || {}),
@@ -350,7 +350,7 @@ export default function ExperienceForm({
 					categoryId: formData.categoryId
 						? Number(formData.categoryId)
 						: DEFAULT_CATEGORY_ID,
-					available: formData.available,
+					isPublished: formData.isPublished,
 					featuredImageId: featuredImage.id,
 					imageIds: galleryImages.map((img) => img.id),
 					tagIds: formData.tagIds,
@@ -516,6 +516,20 @@ export default function ExperienceForm({
 
 					<FormSection
 						variant='simple'
+						title='Δημοσίευση'>
+						<ToggleSwitch
+							checked={formData.isPublished}
+							onChange={(val) =>
+								setFormData((prev) => ({ ...prev, isPublished: val }))
+							}
+							label='Δημοσιευμένο'
+							enabledLabel='Ναι'
+							disabledLabel='Όχι'
+						/>
+					</FormSection>
+
+					<FormSection
+						variant='simple'
 						title='Κατηγορία'>
 						<CategorySelect
 							categories={categories}
@@ -538,20 +552,6 @@ export default function ExperienceForm({
 								setFormData((prev) => ({ ...prev, tagIds: ids }))
 							}
 							className='w-full'
-						/>
-					</FormSection>
-
-					<FormSection
-						variant='simple'
-						title='Διαθεσιμότητα'>
-						<ToggleSwitch
-							checked={formData.available}
-							onChange={(val) =>
-								setFormData((prev) => ({ ...prev, available: val }))
-							}
-							label='Διαθέσιμο'
-							enabledLabel='Ναι'
-							disabledLabel='Όχι'
 						/>
 					</FormSection>
 				</aside>
