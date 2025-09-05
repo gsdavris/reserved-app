@@ -14,6 +14,7 @@ import { validatePricingOption } from '@/lib/validators/pricing';
 import AddonsBuilderSection from '../addons/AddonsBuilderSection';
 import { validateAddonOption } from '@/lib/validators/addons';
 import LocationSection from '../location/LocationSection';
+import AvailabilitySection from '@/components/dashboard/availability/AvailabilitySection';
 import { Save } from 'lucide-react';
 import TagsSelect from '@/components/dashboard/partner/TagsSelect';
 
@@ -387,6 +388,8 @@ export default function ExperienceForm({
 		}
 	};
 
+	const experienceId = initialData?.id;
+
 	return (
 		<form
 			onSubmit={handleSubmit}
@@ -498,6 +501,29 @@ export default function ExperienceForm({
 							disabled={loading}
 						/>
 					</FormSection>
+
+					{Number.isInteger(experienceId) && (
+						<FormSection
+							variant='collapsible'
+							title='Διαθεσιμότητα'
+							description='Ρύθμισε slots, χωρητικότητα και κανόνες κράτησης.'
+							defaultOpen={false}>
+							<AvailabilitySection experienceId={experienceId} />
+						</FormSection>
+					)}
+
+					{!Number.isInteger(experienceId) && (
+						<FormSection
+							variant='simple'
+							title='Διαθεσιμότητα'
+							description='Αποθήκευσε πρώτα την εμπειρία για να ενεργοποιηθεί η διαθεσιμότητα.'>
+							<div className='text-sm text-gray-600'>
+								Η διαθεσιμότητα αποθηκεύεται ανά εμπειρία.
+								Δημιούργησε/αποθήκευσε την εμπειρία και θα εμφανιστεί εδώ ο
+								editor.
+							</div>
+						</FormSection>
+					)}
 				</div>
 
 				{/* SIDEBAR */}

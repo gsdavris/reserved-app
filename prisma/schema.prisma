@@ -324,7 +324,6 @@ model ExperienceAvailability {
   experienceId Int        @unique
 
   type     AvailabilityType
-  timezone String           @default("Europe/Athens")
 
   rules      Json // [{ rrule, startTime?, endTime?, date? }, ...]
   openHours  Json? // [{ dow: 0..6, start:'HH:mm', end:'HH:mm' }, ...]
